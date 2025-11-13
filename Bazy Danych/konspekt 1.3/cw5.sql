@@ -1,0 +1,1 @@
+select concat('The title is: ' ,t.title , ', title number: ', t.title_no)  from title t
