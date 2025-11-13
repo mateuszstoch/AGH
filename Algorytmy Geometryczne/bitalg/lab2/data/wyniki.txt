@@ -1,0 +1,69 @@
+A2: 10000
+A3: 100000
+A4: 1000000
+Graham for A2: 26, 0.1250s
+Graham for A3: 26, 0.8455s
+Graham for A4: 36, 10.6605s
+Jarvis for A2: 26, 0.2481s
+Jarvis for A3: 26, 2.2702s
+Jarvis for A4: 36, 28.9006s
+
+B2: 100
+B3: 1000
+B4: 10000
+Graham for B2: 100, 0.0006s
+Graham for B3: 1000, 0.0066s
+Graham for B4: 10000, 0.0637s
+Jarvis for B2: 100, 0.0080s
+Jarvis for B3: 1000, 0.8431s
+Jarvis for B4: 10000, 78.5873s
+
+
+C2: 1000
+C3: 10000
+C4: 100000
+Graham for C2: 8, 0.1594s
+Graham for C3: 8, 0.0507s
+Graham for C4: 8, 5.7985s
+Jarvis for C2: 8, 0.0806s
+Jarvis for C3: 8, 0.0762s
+Jarvis for C4: 8, 7.6633s
+
+
+D2: (axis_n=2500,diag_n=2000)
+D3: (axis_n=25000,diag_n=20000)
+D4: (axis_n=250000,diag_n=200000)
+Graham for D2: 4, 0.0303s
+Graham for D3: 4, 0.297s
+Graham for D4: 4, 4.6334s
+Jarvis for D2: 4, 0.0398s
+Jarvis for D3: 4, 0.3946s
+Jarvis for D4: 4, 3.9633s
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
