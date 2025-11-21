@@ -1,2 +1,5 @@
-*/venv/
+venv/
 Algorytmy Geometryczne/bitalg.egg-info
+dist/
+alg-geo.txt
+setup.py
