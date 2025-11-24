@@ -1,35 +1,29 @@
-from collections import deque
-
-
-def dfs(G, s, t):
+def dfs(G_residual, s, t):
+    L = len(G_residual)
     stack = [s]
-    path = []
-    parent = [-1 for _ in range(len(G))]
-    visited = [False for _ in range(len(G))]
+    parent = [-1] * L
+    visited = [False] * L
     visited[s] = True
+
     while stack:
         v = stack.pop()
-        visited[v] = True
-        if v == t:
-            break
-        for i in range(len(G)):
-            if G[v][i] != 0 and not visited[i]:
+        for i in range(L):
+            if G_residual[v][i] > 0 and not visited[i]:
                 visited[i] = True
                 parent[i] = v
                 stack.append(i)
 
-    if not visited[t]:
-        return None
-
-    path = []
-    cur = t
-    while cur != -1:
-        path.append(cur)
-        if cur == s:
-            break
-        cur = parent[cur]
-    path.reverse()
-    return path
+                if i == t:
+                    path = []
+                    cur = t
+                    while cur != -1:
+                        path.append(cur)
+                        if cur == s:
+                            break
+                        cur = parent[cur]
+                    path.reverse()
+                    return path
+    return None
 
 
 def fordFulkerson(V, L, t):
@@ -37,6 +31,7 @@ def fordFulkerson(V, L, t):
     s = 0
     for v in V:
         G[v[0]-1][v[1]-1] = 1
+        G[v[1]-1][v[0]-1] = 1
 
     flow = 0
     path = dfs(G, s, t)
