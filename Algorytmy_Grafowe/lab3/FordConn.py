@@ -27,9 +27,9 @@ def dfs(G_residual, s, t):
 
 
 def fordFulkerson(V, L, t):
-    G = [[0 for _ in range(L)]for _ in range(L)]
+    G = [[0 for _ in range(V)]for _ in range(V)]
     s = 0
-    for v in V:
+    for v in L:
         G[v[0]-1][v[1]-1] = 1
         G[v[1]-1][v[0]-1] = 1
 
@@ -49,7 +49,7 @@ def fordFulkerson(V, L, t):
 
 def findGraphConnectivity(V, L):
     mininum = float("inf")
-    for i in range(1, L):
+    for i in range(1, V):
         output = fordFulkerson(V, L, i)
         if output < mininum:
             mininum = output

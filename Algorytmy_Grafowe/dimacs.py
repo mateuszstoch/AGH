@@ -13,7 +13,7 @@ def loadCNFFormula(name):
     V = 0
     L = []
 
-    f = open(name, "r")
+    f = open(name, "r", encoding='utf-8', errors='ignore')
     lines = f.readlines()
     for l in lines:
         s = l.split()
@@ -42,7 +42,7 @@ def loadWeightedGraph(name):
     V = 0
     L = []
 
-    f = open(name, "r")
+    f = open(name, "r", encoding='utf-8', errors='ignore')
     lines = f.readlines()
     for l in lines:
         s = l.split()
@@ -71,7 +71,7 @@ def loadDirectedWeightedGraph(name):
     V = 0
     L = []
 
-    f = open(name, "r")
+    f = open(name, "r", encoding='utf-8', errors='ignore')
     lines = f.readlines()
     for l in lines:
         s = l.split()
@@ -91,6 +91,6 @@ def loadDirectedWeightedGraph(name):
 
 def readSolution(name):
     """Read the expected solution from the first line of the graph file"""
-    with open(name, 'r') as f:
+    with open(name, 'r', encoding='utf-8', errors='ignore') as f:
         line = f.readline()
         return line.split()[-1]

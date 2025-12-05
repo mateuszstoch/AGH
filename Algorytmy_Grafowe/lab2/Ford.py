@@ -71,10 +71,10 @@ def bfs(G, s, t):
 
 
 def fordFulkerson(V, L):
-    G = [[0 for _ in range(L)]for _ in range(L)]
+    G = [[0 for _ in range(V)]for _ in range(V)]
     s = 0
     t = len(G)-1
-    for v in V:
+    for v in L:
         G[v[0]-1][v[1]-1] = v[2]
 
     flow = 0

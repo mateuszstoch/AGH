@@ -14,7 +14,7 @@ class TestFailedError(Exception):
 
 
 def process_file(test_data, RESOULT, test_function):
-    L, V = test_data
+    V, L = test_data
     test_func_output = test_function(V, L)
     if RESOULT != test_func_output:
         raise TestFailedError(
@@ -49,8 +49,14 @@ def run_tests_in_directory(directory_path_str: str, load_function, test_function
     for file_path in files_to_test:
 
         tests_run += 1
-        test_data = load_function(file_path)
-        resoult = int(readSolution(file_path))
+        try:
+            test_data = load_function(file_path)
+            resoult = int(readSolution(file_path))
+        except:
+            print(
+                f"[SKIP]  {file_path.name} : Brak pliku rozwiązania lub błąd odczytu.")
+            tests_skipped += 1
+            continue
         start_time = time.perf_counter()
 
         try:

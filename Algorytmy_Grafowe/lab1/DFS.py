@@ -21,8 +21,8 @@ def dfs_path_exists(adj, s, t, min_w, visited):
 
 
 def widest_path_binary_dfs(
-        edges: List[Tuple[int, int, int]],
         V: int,
+        edges: List[Tuple[int, int, int]],
         s: int = 1,
         t: int = 2) -> int | None:
     adj = build_adj_list(V, edges)

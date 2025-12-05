@@ -87,7 +87,7 @@ def minimumCutPhase(G):
     return cut_value
 
 
-def stoerWagner(L, V):
+def stoerWagner(V, L):
     G = [Node() for _ in range(V)]
     for (u, v, w) in L:
         x, y = u - 1, v - 1

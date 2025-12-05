@@ -27,8 +27,8 @@ class UnionFind:
 
 
 def widest_path_union_find(
-        edges: List[Tuple[int, int, int]],
         V: int,
+        edges: List[Tuple[int, int, int]],
         s: int = 1,
         t: int = 2) -> Optional[int]:
     edges_sorted = sorted(edges, key=lambda e: e[2], reverse=True)

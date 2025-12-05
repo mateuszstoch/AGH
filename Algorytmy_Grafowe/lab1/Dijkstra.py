@@ -3,8 +3,8 @@ from typing import List, Tuple
 
 
 def widest_path_dijkstra(
-        edges: List[Tuple[int, int, int]],
         V: int,
+        edges: List[Tuple[int, int, int]],
         s: int = 1,
         t: int = 2) -> int | None:
     adj = [[] for _ in range(V + 1)]
