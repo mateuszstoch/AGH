@@ -1,5 +1,6 @@
 from .test_core import TestCore, get_test_path
 
+
 class Point:
     def __init__(self, x_cord, y_cord, eps):
         self.x = x_cord
@@ -41,7 +42,8 @@ class Test(TestCore):
                     points.append(list(map(float, point.split(" "))))
             return points
         except FileNotFoundError:
-            print(f"ERROR: File not found ({get_test_path(4, task_no, test_no)}.in)")
+            print(
+                f"ERROR: File not found ({get_test_path(4, task_no, test_no)}.in)")
             return []
 
     @staticmethod
@@ -105,13 +107,13 @@ class Test(TestCore):
             if max_y < start[1]:
                 return 0, f"współrzędna y wynosi {start[1]}", f"górna granica przedziału wynosi {max_y} || współrzędna większa niż górna granica przedziału"
             if max_x < end[0]:
-                return 0,f"współrzędna x wynosi {end[0]}", f"górna granica przedziału wynosi {max_x} || współrzędna większa niż górna granica przedziału"
+                return 0, f"współrzędna x wynosi {end[0]}", f"górna granica przedziału wynosi {max_x} || współrzędna większa niż górna granica przedziału"
             if max_y < end[1]:
-                return 0,f"współrzędna y wynosi {end[1]}", f"górna granica przedziału wynosi {max_y} || współrzędna większa niż górna granica przedziału"
+                return 0, f"współrzędna y wynosi {end[1]}", f"górna granica przedziału wynosi {max_y} || współrzędna większa niż górna granica przedziału"
             if 0 > start[0]:
-                return 0,f"współrzędna x wynosi {start[0]}", f"dolna granica wprzedziału wynosi 0 || współrzędna mniejsza niż dolna granica przedziału"
+                return 0, f"współrzędna x wynosi {start[0]}", f"dolna granica wprzedziału wynosi 0 || współrzędna mniejsza niż dolna granica przedziału"
             if 0 > start[1]:
-                return 0,f"współrzędna x wynosi {start[1]}", f"dolna granica wprzedziału wynosi 0 || współrzędna mniejsza niż dolna granica przedziału"
+                return 0, f"współrzędna x wynosi {start[1]}", f"dolna granica wprzedziału wynosi 0 || współrzędna mniejsza niż dolna granica przedziału"
             if 0 > end[0]:
                 return 0, f"współrzędna x wynosi {end[0]}", f"dolna granica wprzedziału wynosi 0 || współrzędna mniejsza niż dolna granica przedziału"
             if 0 > end[1]:
@@ -127,7 +129,8 @@ class Test(TestCore):
         :return:
         """
         test_data = self.read_points(2, test_no)
-        output = False if open(get_test_path(4, 2, test_no) + ".out").read() == "0" else True
+        output = False if open(get_test_path(
+            4, 2, test_no) + ".out").read() == "0" else True
         result = func(test_data)
         if result == output:
             return 1, None
@@ -139,7 +142,8 @@ class Test(TestCore):
         for intersection in input_list:
             if type(intersection) == str:
                 intersection_val = intersection.split(" ")
-                x, y, id1, id2 = intersection_val[0], intersection_val[1], int(intersection_val[2]), int(intersection_val[3])
+                x, y, id1, id2 = intersection_val[0], intersection_val[1], int(
+                    intersection_val[2]), int(intersection_val[3])
                 point = Point(float(x), float(y), eps)
             else:
                 point, id1, id2 = intersection[0], intersection[1], intersection[2]

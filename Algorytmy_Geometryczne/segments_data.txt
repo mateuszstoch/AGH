@@ -1,0 +1,1 @@
+[((np.float64(0.32), np.float64(9.61)), (np.float64(9.69), np.float64(0.34))), ((np.float64(0.19), np.float64(0.29)), (np.float64(9.59), np.float64(9.76))), ((np.float64(2.62), np.float64(5.11)), (np.float64(3.35), np.float64(5.1))), ((np.float64(6.07), np.float64(5.1)), (np.float64(6.82), np.float64(5.14)))]
