@@ -129,7 +129,7 @@ Trzecia pochodna, użyta w~powyższym wzorze:
   \caption{Zestawienie wartości $h_{\min}$ wyznaczonych empirycznie oraz minimalnej wartości błędów.}
   \begin{tabular}{lcc}
     \toprule
-    Schemat & $R(h_{\min})$  & $h_{\min}$ empiryczne \\
+    Schemat & $E(h_{\min})$  & $h_{\min}$ empiryczne \\
     \midrule
     Różnica w przód   & $2.55e-08$ & $ 10^{-8}$ \\
     Różnica centralna & $6.22e-12$ & $ 10^{-12}$ \\
@@ -205,9 +205,9 @@ gdzie $c = \max_j x_j$, unika się przepełnienia. Wynik jest matematycznie rów
 
 \subsection{Weryfikacja numeryczna}
 
-Dla podpunktów (a) i~(b) weryfikację przeprowadzono przy użyciu biblioteki \texttt{decimal} z~precyzją 5 cyfr znaczących (\texttt{getcontext().prec = 5}).
+Dla podpunktów (e) i~(b) weryfikację przeprowadzono przy użyciu biblioteki \texttt{decimal} z~precyzją 5 cyfr znaczących (\texttt{getcontext().prec = 5}), oraz int8.
 
-\textbf{Podpunkt (e):} Dla $a = 126, b=124$ wyrażonych w int8:
+\textbf{Podpunkt (e):} Dla $a = 126, b=124$:
 \begin{itemize}
   \item wersja niestabilna: $(126 + 124)/2 = -3$ (błąd przepełnienia),
   \item wersja stabilna: $126+ (124 - 126)/2 = 125$ (wynik poprawny).
