@@ -126,13 +126,13 @@ Trzecia pochodna, użyta w~powyższym wzorze:
 
 \begin{table}[H]
   \centering
-  \caption{Zestawienie wartości $h_{\min}$ wyznaczonych empirycznie i~ze wzorów.}
+  \caption{Zestawienie wartości $h_{\min}$ wyznaczonych empirycznie oraz minimalnej wartości błędów.}
   \begin{tabular}{lcc}
     \toprule
-    Schemat & $h_{\min}$ empiryczne & $h_{\min}$ teoretyczne \\
+    Schemat & $R(h_{\min})$  & $h_{\min}$ empiryczne \\
     \midrule
-    Różnica w przód   & $10^{-8}$ & $\approx 10^{-8}$ \\
-    Różnica centralna & $10^{-7}$ & $\approx 10^{-7}$ \\
+    Różnica w przód   & $2.55e-08$ & $ 10^{-8}$ \\
+    Różnica centralna & $6.22e-12$ & $ 10^{-12}$ \\
     \bottomrule
   \end{tabular}
   \label{tab:hmin}
@@ -207,16 +207,16 @@ gdzie $c = \max_j x_j$, unika się przepełnienia. Wynik jest matematycznie rów
 
 Dla podpunktów (a) i~(b) weryfikację przeprowadzono przy użyciu biblioteki \texttt{decimal} z~precyzją 5 cyfr znaczących (\texttt{getcontext().prec = 5}).
 
-\textbf{Podpunkt (a):} Dla $x = 10^{-4}$:
+\textbf{Podpunkt (e):} Dla $a = 126, b=124$ wyrażonych w int8:
 \begin{itemize}
-  \item wersja niestabilna: $\sqrt{10^{-4}+1} - 1 \approx 5.0 \times 10^{-5}$ (błąd zaokrąglenia widoczny),
-  \item wersja stabilna: $\dfrac{10^{-4}}{\sqrt{10^{-4}+1}+1} \approx 4.9999 \times 10^{-5}$ (wynik dokładniejszy).
+  \item wersja niestabilna: $(126 + 124)/2 = -3$ (błąd przepełnienia),
+  \item wersja stabilna: $126+ (124 - 126)/2 = 125$ (wynik poprawny).
 \end{itemize}
 
-\textbf{Podpunkt (b):} Dla $x = 100.01$, $y = 100.00$:
+\textbf{Podpunkt (b):} Dla $x = 100.100$, $y = 100.099$:
 \begin{itemize}
-  \item wersja niestabilna: $x^2 - y^2 = 10002.0001 - 10000.0 = 2.0$ (utrata cyfr znaczących),
-  \item wersja stabilna: $(x-y)(x+y) = 0.01 \times 200.01 = 2.001$ (wynik prawidłowy).
+  \item wersja niestabilna: $x^2 - y^2 =  10020 - 10020  = 0.0$ (utrata cyfr znaczących),
+  \item wersja stabilna: $(x-y)(x+y) = 0.001 \times 200.199 = 0.20020$ (wynik prawidłowy).
 \end{itemize}
 
 % ============================================================
