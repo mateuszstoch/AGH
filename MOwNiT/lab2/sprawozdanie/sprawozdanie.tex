@@ -1,0 +1,359 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- Pakiety ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% --- Zakaz dzielenia wyrazów ---
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% --- Zmiana nazwy float figure: Rysunek -> Wykres ---
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% --- Styl listingów ---
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  captionpos=b,
+  showstringspaces=false,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'o}}1
+            {ś}{{\'s}}1 {ł}{{\l{}}}1 {ź}{{\'z}}1
+            {ż}{{\.z}}1 {ć}{{\'c}}1 {ń}{{\'n}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'O}}1
+            {Ś}{{\'S}}1 {Ł}{{\L{}}}1,
+}
+
+% --- Strona tytułowa ---
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 2 \textemdash{} Metoda najmniejszych kwadratów
+}
+\author{Mateusz Stoch}
+\date{25 marca 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1 \textemdash{} Metoda najmniejszych kwadratów}
+% ============================================================
+
+% --- 1.1 Opis zadania ---
+\subsection{Opis zadania}
+
+Zadanie polega na zastosowaniu metody najmniejszych kwadratów do przewidywania
+roku wydania utworu muzycznego na podstawie jego cech. Zbiór danych
+\texttt{YearPredictionMSD.txt} zawiera $515\,345$ utworów, z~których pierwsze
+$463\,715$ stanowi zbiór treningowy, a~pozostałe $51\,630$ to zbiór testowy.
+Pierwsza kolumna to rok wydania, pozostałe $90$ kolumn to cechy numeryczne
+(barwa i~kowariancja barwy).
+
+Zadanie obejmuje:
+\begin{enumerate}
+  \item[(a)] Wczytanie zbioru i~podział na część treningową i~testową.
+  \item[(b)] Narysowanie histogramu i~posortowanego wykresu roku wydania.
+  \item[(c)--(d)] Zbudowanie macierzy modelu $\mathbf{A}$ (z dodaną kolumną jedynek)
+        oraz jej znormalizowanej wersji metodą min-max do~$[0,1]$:
+        \begin{equation}
+          f_{\text{scaled}} = \frac{f - f_{\min}}{f_{\max} - f_{\min}}.
+          \label{eq:minmax}
+        \end{equation}
+  \item[(e)] Wyznaczenie wektora wag $\mathbf{w}$ przez rozwiązanie równania normalnego:
+        \begin{equation}
+          \mathbf{A}^T \mathbf{A}\, \mathbf{w} = \mathbf{A}^T \mathbf{y}.
+          \label{eq:normal}
+        \end{equation}
+  \item[(f)] Wyznaczenie wag metodą dekompozycji SVD (\texttt{scipy.linalg.lstsq})
+        oraz z~regularyzacją Tichonowa ($\lambda = 0.01$):
+        \begin{equation}
+          \bigl(\mathbf{A}^T \mathbf{A} + \lambda\mathbf{I}\bigr)\mathbf{w}
+          = \mathbf{A}^T \mathbf{y}.
+          \label{eq:tikhonov}
+        \end{equation}
+  \item[(g)] Obliczenie współczynnika uwarunkowania macierzy $\mathbf{A}^T\mathbf{A}$
+        dla wersji nieznormalizowanej i~znormalizowanej.
+  \item[(h)] Ewaluacja modeli na zbiorze testowym przy użyciu średniego błędu
+        bezwzględnego (MAE).
+  \item[(i)] Inkrementalne wyznaczenie wag filtrem Kalmana podzielonym na
+        5 pakietów danych.
+\end{enumerate}
+
+% --- 1.2 Argumentacja ---
+\subsection{Argumentacja rozwiązania}
+
+\subsubsection{Przygotowanie danych i normalizacja}
+
+Do macierzy cech $\mathbf{X}$ dołączono z~lewej kolumnę jedynek, żeby model mógł
+uczyć się wyrazu wolnego (biasu). Tak powstała macierz modelu $\mathbf{A}$.
+
+Normalizacja min-max (wzór~\ref{eq:minmax}) jest potrzebna, bo poszczególne cechy mogą
+mieć bardzo różne zakresy wartości -- bez normalizacji macierz
+$\mathbf{A}^T\mathbf{A}$ staje się gorzej uwarunkowana i~rozwiązanie traci precyzję.
+Analogicznie normalizuje się wektor $\mathbf{y}$. Żeby uzyskać predykcje w~oryginalnej
+skali, stosuje się operację odwrotną:
+\begin{equation}
+  \hat{y}_{\text{orig}} = \hat{y}_{\text{scaled}}\cdot(y_{\max} - y_{\min}) + y_{\min}.
+  \label{eq:unscale}
+\end{equation}
+
+\subsubsection{Równanie normalne i jego warianty}
+
+Metoda najmniejszych kwadratów minimalizuje sumę kwadratów reszt
+$\|\mathbf{A}\mathbf{w} - \mathbf{y}\|^2$. Rozwiązanie wyraża się przez równanie
+normalne~(\ref{eq:normal}). Zamiast jawnie odwracać macierz, używamy solwera
+\texttt{np.linalg.solve}, co jest numerycznie bezpieczniejsze.
+
+Regularyzacja Tichonowa (wzór~\ref{eq:tikhonov}) dodaje do macierzy $\mathbf{A}^T\mathbf{A}$
+człon $\lambda\mathbf{I}$, który poprawia uwarunkowanie i~chroni przed
+przeuczeniem. Dla wyrazu wolnego (pierwsza kolumna jedynek) ustawiono
+odpowiedni element macierzy $\mathbf{I}$ na zero, żeby nie regularyzować biasu.
+
+Biblioteczna funkcja \texttt{scipy.linalg.lstsq} rozwiązuje problem wewnętrznie
+przez rozkład SVD, co jest najbardziej stabilną, ale i~najwolniejszą metodą.
+
+\subsubsection{Współczynnik uwarunkowania}
+
+Współczynnik uwarunkowania $\operatorname{cond}(\mathbf{A}^T\mathbf{A})$ mówi,
+o~ile maksymalnie mogą urosnąć błędy. Przybliżona utrata cyfr znaczących wynosi:
+\begin{equation}
+  \Delta \approx \log_{10}\!\bigl(\operatorname{cond}(\mathbf{A}^T\mathbf{A})\bigr).
+\end{equation}
+
+\subsubsection{Filtr Kalmana (wyznaczanie inkrementalne)}
+
+Zamiast wczytać wszystkie dane naraz, można aktualizować wagi partiami.
+Przy każdym pakiecie $\mathbf{A}_k$, $\mathbf{y}_k$ liczymy błąd predykcji
+(innowację):
+\begin{equation}
+  \mathbf{e}_k = \mathbf{y}_k - \mathbf{A}_k\,\mathbf{w}_{k-1},
+\end{equation}
+aktualizujemy macierz informacji:
+\begin{equation}
+  \mathbf{P}_k^{-1} = \mathbf{P}_{k-1}^{-1} + \mathbf{A}_k^T\mathbf{A}_k,
+\end{equation}
+i poprawiamy wagi:
+\begin{equation}
+  \mathbf{w}_k = \mathbf{w}_{k-1}
+    + \mathbf{P}_k\,\mathbf{A}_k^T\,\mathbf{e}_k.
+\end{equation}
+Wynik po pięciu iteracjach powinien zbiegnąć do tego, co daje rozwiązanie
+jednorazowe. Zamiast jawnego odwracania $\mathbf{P}$ używamy \texttt{np.linalg.solve}.
+
+\subsubsection{Kluczowe fragmenty kodu}
+
+\begin{lstlisting}[caption={Budowa macierzy i normalizacja}]
+y_train = train[0].values
+X_train = train.drop(0, axis=1).values
+y_test  = test[0].values
+X_test  = test.drop(0, axis=1).values
+
+ones_train = np.ones((X_train.shape[0], 1))
+ones_test  = np.ones((X_test.shape[0],  1))
+A_train = np.hstack((ones_train, X_train))
+A_test  = np.hstack((ones_test,  X_test))
+
+X_min = X_train.min(axis=0)
+X_max = X_train.max(axis=0)
+X_train_scaled = (X_train - X_min) / (X_max - X_min)
+X_test_scaled  = (X_test  - X_min) / (X_max - X_min)
+
+A_train_scaled = np.hstack((ones_train, X_train_scaled))
+A_test_scaled  = np.hstack((ones_test,  X_test_scaled))
+
+y_min = y_train.min();  y_max = y_train.max()
+y_train_scaled = (y_train - y_min) / (y_max - y_min)
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Wyznaczanie wag -- trzy warianty}]
+# (e) Rownananie normalne -- solver
+w_norm = np.linalg.solve(
+    A_train.T @ A_train, A_train.T @ y_train)
+w_norm_s = np.linalg.solve(
+    A_train_scaled.T @ A_train_scaled,
+    A_train_scaled.T @ y_train_scaled)
+
+# (f-1) SVD przez lstsq
+w_svd, _, _, _ = scipy.linalg.lstsq(A_train, y_train)
+
+# (f-2) Regularyzacja Tichonowa lambda=0.01
+lam = 0.01
+I = np.eye(A_train.shape[1]);  I[0, 0] = 0
+w_reg = np.linalg.solve(
+    A_train.T @ A_train + lam * I, A_train.T @ y_train)
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Filtr Kalmana -- aktualizacja partiami}]
+P_inv    = 1e-5 * np.eye(A_train.shape[1])
+w_kalman = np.zeros(A_train.shape[1])
+
+batches = [(0,100000),(100000,200000),(200000,300000),
+           (300000,400000),(400000,A_train.shape[0])]
+
+for idx, (s, e) in enumerate(batches):
+    A_k = A_train[s:e];  y_k = y_train[s:e]
+    err   = y_k - A_k @ w_kalman
+    P_inv += A_k.T @ A_k
+    w_kalman += np.linalg.solve(P_inv, A_k.T @ err)
+    y_pred = A_test @ w_kalman
+    mae = np.mean(np.abs(y_test - y_pred))
+    print(f"Iteracja {idx+1}: MAE = {mae:.4f}")
+\end{lstlisting}
+
+% --- 1.3 Wykresy i wyniki ---
+\subsection{Wykresy i wyniki liczbowe}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{wykres1.png}
+  \caption{Histogram (lewy) i~posortowany wykres roku wydania (prawy) dla całego zbioru.}
+  \label{fig:wykres1}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{Współczynniki uwarunkowania macierzy $\mathbf{A}^T\mathbf{A}$.}
+  \begin{tabular}{lc}
+    \toprule
+    Wersja macierzy & $\operatorname{cond}(\mathbf{A}^T\mathbf{A})$ \\
+    \midrule
+    Nieznormalizowana & $3{,}87 \times 10^{9}$ \\
+    Znormalizowana    & $2{,}15 \times 10^{6}$ \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:cond}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Średni błąd bezwzględny (MAE) na zbiorze testowym dla różnych wariantów.}
+  \begin{tabular}{lc}
+    \toprule
+    Metoda & MAE (lata) \\
+    \midrule
+    Równanie normalne (nieznormalizowane)  & $6{,}800$ \\
+    Równanie normalne (znormalizowane)     & $6{,}800$ \\
+    SVD -- \texttt{lstsq} (nieznormalizowane) & $6{,}800$ \\
+    Regularyzacja Tichonowa $\lambda=0.01$ & $6{,}800$ \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:mae}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{MAE filtra Kalmana po każdej iteracji (zbiór testowy).}
+  \begin{tabular}{ccc}
+    \toprule
+    Iteracja & Wiersze treningowe & MAE (lata) \\
+    \midrule
+    1 & $0      - 100\,000$          & $6{,}846$ \\
+    2 & $100\,000 - 200\,000$        & $6{,}807$ \\
+    3 & $200\,000 - 300\,000$        & $6{,}800$ \\
+    4 & $300\,000 - 400\,000$        & $6{,}801$ \\
+    5 & $400\,000 - 463\,715$        & $6{,}800$ \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:kalman}
+\end{table}
+
+% --- 1.4 Wnioski ---
+\subsection{Wnioski}
+
+\begin{enumerate}
+  \item Normalizacja min-max zmniejszyła współczynnik uwarunkowania
+        z~$3{,}87 \times 10^9$ do $2{,}15 \times 10^6$, czyli o~ponad
+        trzy rzędy wielkości (Tabela~\ref{tab:cond}). Przekłada się to bezpośrednio
+        na mniejsze ryzyko utraty cyfr znaczących podczas rozwiązywania układu.
+
+  \item Wszystkie cztery metody dały praktycznie identyczne MAE na poziomie
+        $\approx 6{,}800$ lat (Tabela~\ref{tab:mae}). Oznacza to, że dla
+        tego zbioru różnice numeryczne między solverem, SVD i~regularyzacją
+        są na tyle małe, że nie wpływają na jakość predykcji.
+
+  \item Filtr Kalmana już po 3 iteracjach (300\,000 wierszy) osiągnął wynik
+        porównywalny z~rozwiązaniem jednorazowym~--- MAE $\approx 6{,}800$
+        (Tabela~\ref{tab:kalman}). Podejście inkrementalne jest przydatne
+        przy dużych zbiorach danych, które nie mieszczą się w~pamięci.
+
+  \item Współczynnik uwarunkowania wpływa na liczbę traconych cyfr znaczących
+        w~mantysie zgodnie z~zależnością $\Delta \approx \log_{10}(\text{cond})$.
+        Dla nieznormalizowanej macierzy tracimy ok.~9 cyfr z~15 dostępnych
+        w~podwójnej precyzji~--- dlatego normalizacja jest tu kluczowa.
+\end{enumerate}
+
+% ============================================================
+\section{Podsumowanie}
+% ============================================================
+
+\begin{enumerate}
+  \item \textbf{Normalizacja danych.}
+        Przed rozwiązaniem układu warto znormalizować cechy, żeby macierz
+        $\mathbf{A}^T\mathbf{A}$ była lepiej uwarunkowana.
+        W~tym zadaniu uwarunkowanie poprawiło się o~ponad trzy rzędy wielkości.
+
+  \item \textbf{Metody wyznaczania wag.}
+        Równanie normalne z~solverem, SVD i~regularyzacja dają zbliżone wyniki
+        dla dobrze przygotowanych danych. SVD jest najstabilniejszą metodą,
+        ale też najwolniejszą. Regularyzacja przydaje się głównie przy danych,
+        gdzie macierz może być prawie osobliwa.
+
+  \item \textbf{Podejście inkrementalne.}
+        Filtr Kalmana umożliwia aktualizację wag bez konieczności trzymania
+        całego zbioru w~pamięci. Wynik zbiega do rozwiązania jednorazowego
+        już po kilku iteracjach.
+\end{enumerate}
+
+% ============================================================
+\section*{Bibliografia}
+\addcontentsline{toc}{section}{Bibliografia}
+% ============================================================
+
+\begin{thebibliography}{9}
+
+  \bibitem{lab02}
+  \textit{Wprowadzenie do laboratorium}, materia\l{}y dost\k{e}pne na platformie
+  Teams w~katalogu lab02.
+
+\end{thebibliography}
+
+\end{document}
