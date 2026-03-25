@@ -221,7 +221,7 @@ I = np.eye(A_train.shape[1]);  I[0, 0] = 0
 w_reg = np.linalg.solve(
     A_train.T @ A_train + lam * I, A_train.T @ y_train)
 \end{lstlisting}
-
+\newpage
 \begin{lstlisting}[caption={Filtr Kalmana -- aktualizacja partiami}]
 P_inv    = 1e-5 * np.eye(A_train.shape[1])
 w_kalman = np.zeros(A_train.shape[1])
