@@ -127,12 +127,12 @@ Trzecia pochodna, użyta w~powyższym wzorze:
 \begin{table}[H]
   \centering
   \caption{Zestawienie wartości $h_{\min}$ wyznaczonych empirycznie oraz minimalnej wartości błędów.}
-  \begin{tabular}{lcc}
+  \begin{tabular}{lccc}
     \toprule
-    Schemat & $E(h_{\min})$  & $h_{\min}$ empiryczne \\
+    Schemat & $E(h_{\min})$  & $h_{\min}$ empiryczne & $h_{\min}$ teoretuczne \\
     \midrule
-    Różnica w przód   & $2.55e-08$ & $ 10^{-8}$ \\
-    Różnica centralna & $6.22e-12$ & $ 10^{-12}$ \\
+    Różnica w przód   & $2.55e-08$ & $ 10^{-8}$ & \approx  $ 10^{-8}$ \\
+    Różnica centralna & $6.22e-12$ & $ 10^{-12}$ & \approx  $ 10^{-12}$ \\
     \bottomrule
   \end{tabular}
   \label{tab:hmin}
@@ -348,9 +348,9 @@ Tablicę sortuje się malejąco (od największych do najmniejszych). Błąd jest
 Z wykresów \ref{fig:wykres3} i~\ref{fig:wykres4} wynikają następujące obserwacje:
 
 \begin{itemize}
-  \item Metoda \textbf{(a) -- podwójna precyzja} osiąga zdecydowanie najmniejszy błąd względny, rzędu $10^{-13}$–$10^{-14}$. Jest to wynik użycia 64-bitowego akumulatora, który minimalizuje błąd zaokrąglenia przy każdym dodawaniu.
+  \item Metoda \textbf{(a) -- podwójna precyzja} osiąga bardzo mały błąd względny, rzędu $10^{-13}$–$10^{-14}$. Jest to wynik użycia 64-bitowego akumulatora, który minimalizuje błąd zaokrąglenia przy każdym dodawaniu.
   \item Metoda \textbf{(b) -- pojedyncza precyzja} charakteryzuje się błędem rosnącym z~$n$, co jest typowym zachowaniem przy sekwencyjnym sumowaniu z~ograniczoną precyzją.
-  \item Metoda \textbf{(c) -- algorytm Kahana} utrzymuje stały, mały błąd względny niezależnie od $n$. Efektywnie kompensuje błąd zaokrąglenia kosztem dodatkowych operacji arytmetycznych.
+  \item Metoda \textbf{(c) -- algorytm Kahana} osiąga zdecydowanie najmniejszy błąd względny niezależnie od $n$. Efektywnie kompensuje błąd zaokrąglenia kosztem dodatkowych operacji arytmetycznych.
   \item Metody \textbf{(d) rosnąco} i~\textbf{(e) malejąco} dają zbliżone wyniki do metody (b), gdyż zasadniczo różnica polega jedynie na kolejności sumowania w~ramach tej samej precyzji.
   \item Na wykresie w~skali liniowej (Wykres 4) widoczny jest gwałtowny wzrost błędu metod (b), (d) i~(e) dla $n = 10^8$, podczas gdy metody (a) i~(c) pozostają w~pobliżu zera.
 \end{itemize}
