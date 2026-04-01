@@ -1,0 +1,447 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- Pakiety ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% --- Zakaz dzielenia wyrazów ---
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% --- Zmiana nazwy float figure: Rysunek -> Wykres ---
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% --- Styl listingów ---
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  captionpos=b,
+  showstringspaces=false,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'o}}1
+            {ś}{{\'s}}1 {ł}{{\l{}}}1 {ź}{{\'z}}1
+            {ż}{{\.z}}1 {ć}{{\'c}}1 {ń}{{\'n}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'O}}1
+            {Ś}{{\'S}}1 {Ł}{{L}}1,
+}
+
+% --- Strona tytułowa ---
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 3 \textemdash{} Interpolacja
+}
+\author{Mateusz Stoch}
+\date{1 kwietnia 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1 \textemdash{} Interpolacja populacji USA}
+% ============================================================
+
+% --- 1.1 Opis zadania ---
+\subsection{Opis zadania}
+
+Zadanie polega na wyznaczeniu wielomianu interpolacyjnego ósmego stopnia
+na podstawie danych o~populacji USA z~lat 1900--1980 (9 punktów, co 10 lat).
+Rozważane są cztery różne bazy funkcji bazowych $\phi_j(t)$:
+\begin{align}
+  \phi_j(t) &= t^{j-1}, \label{eq:baza1} \\
+  \phi_j(t) &= (t - 1900)^{j-1}, \label{eq:baza2} \\
+  \phi_j(t) &= (t - 1940)^{j-1}, \label{eq:baza3} \\
+  \phi_j(t) &= \left(\frac{t - 1940}{40}\right)^{j-1}. \label{eq:baza4}
+\end{align}
+Na podstawie najlepiej uwarunkowanej bazy wyznacza się współczynniki wielomianu
+i~dokonuje ekstrapolacji do roku 1990. Zadanie obejmuje też wyznaczenie
+wielomianów Lagrange'a i~Newtona, a~następnie analizę wpływu zaokrąglenia
+danych na jakość interpolacji.
+
+% --- 1.2 Argumentacja ---
+\subsection{Argumentacja rozwiązania}
+
+\subsubsection{Macierz Vandermonde'a i współczynnik uwarunkowania}
+
+Dla każdej bazy budowana jest macierz Vandermonde'a $\mathbf{V}$, gdzie
+$V_{ij} = \phi_j(t_i)$. Rozwiązując układ $\mathbf{V}\mathbf{c} = \mathbf{y}$,
+dostajemy współczynniki wielomianu. Problem w~tym, że dla bazy~(\ref{eq:baza1})
+wartości $t_i$ są rzędu 1900--1980, więc potęgując je do 8 dostajemy liczby
+rzędu $10^{26}$~--- macierz jest skrajnie źle uwarunkowana.
+
+Przesuwanie i~skalowanie argumentu (bazy 2--4) drastycznie poprawia
+uwarunkowanie. Baza~(\ref{eq:baza4}) jest najlepsza, bo skaluje wartości do
+przedziału $[-1, 1]$.
+\newpage
+\begin{lstlisting}[caption={Budowa macierzy Vandermonde'a}]
+t = years.astype(float)
+V1 = np.vander(t,              N=9, increasing=True)
+V2 = np.vander(t - 1900,       N=9, increasing=True)
+V3 = np.vander(t - 1940,       N=9, increasing=True)
+V4 = np.vander((t-1940)/40,    N=9, increasing=True)
+\end{lstlisting}
+
+\subsubsection{Schemat Hornera}
+
+Do obliczania wartości wielomianu w~wielu punktach używa się schematu Hornera,
+który jest numerycznie stabilniejszy i~szybszy niż bezpośrednie sumowanie potęg:
+\begin{equation}
+  p(x) = c_0 + x\bigl(c_1 + x(c_2 + \cdots + x\,c_n)\bigr).
+\end{equation}
+
+\begin{lstlisting}[caption={Schemat Hornera dla bazy 4}]
+def horner_basis4(t_eval, c, center=1940, scale=40):
+    x = (t_eval - center) / scale
+    result = np.zeros_like(t_eval, dtype=float)
+    for coeff in reversed(c):
+        result = result * x + coeff
+    return result
+\end{lstlisting}
+
+\subsubsection{Wielomian Lagrange'a}
+
+Wzór Lagrange'a wyraża wielomian jako kombinację liniową funkcji bazowych $L_i$:
+\begin{equation}
+  p(t) = \sum_{i=0}^{n} y_i\, L_i(t), \qquad
+  L_i(t) = \prod_{j \neq i} \frac{t - t_j}{t_i - t_j}.
+\end{equation}
+Nie wymaga rozwiązywania układu równań, ale jest wolniejszy dla dużej liczby węzłów.
+
+\subsubsection{Wielomian Newtona (iloraz różnicowy)}
+
+Wielomian Newtona jest zbudowany na ilorazach różnicowych:
+\begin{equation}
+  p(t) = c_0 + c_1(t{-}t_0) + c_2(t{-}t_0)(t{-}t_1) + \cdots
+\end{equation}
+Zaletą tej postaci jest to, że dodanie nowego węzła wymaga tylko jednej dodatkowej
+operacji~--- nie trzeba przebudowywać całego wielomianu.
+
+% --- 1.3 Wykresy i wyniki ---
+\subsection{Wykresy i wyniki liczbowe}
+
+\begin{table}[H]
+  \centering
+  \caption{Współczynniki uwarunkowania macierzy Vandermonde'a dla czterech baz.}
+  \begin{tabular}{lll}
+    \toprule
+    Baza & Definicja & $\operatorname{cond}(\mathbf{V})$ \\
+    \midrule
+    Baza 1 & $t^{j-1}$                  & $\approx 5{,}36 \times 10^{36}$ \\
+    Baza 2 & $(t-1900)^{j-1}$           & $\approx 5{,}87 \times 10^{15}$ \\
+    Baza 3 & $(t-1940)^{j-1}$           & $\approx 9{,}32 \times 10^{12}$ \\
+    Baza 4 & $((t-1940)/40)^{j-1}$      & $\approx 1{,}61 \times 10^{3}$  \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:cond_van}
+\end{table}
+
+Najlepiej uwarunkowana jest Baza 4~--- to ona została użyta do wyznaczenia
+współczynników i~ekstrapolacji.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres1.png}
+  \caption{Wielomian interpolacyjny (baza 4) na przedziale 1900--1990
+           z~zaznaczonymi węzłami interpolacji.}
+  \label{fig:interpolacja_baza4}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres2.png}
+  \caption{Wielomian interpolacyjny Lagrange'a na tych samych danych.}
+  \label{fig:lagrange1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres3.png}
+  \caption{Wielomian interpolacyjny Newtona.}
+  \label{fig:newton}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{Ekstrapolacja do roku 1990 -- porównanie wyników.}
+  \begin{tabular}{lrr}
+    \toprule
+    Dane wejściowe & Predykcja (1990) & Błąd względny \\
+    \midrule
+    Oryginalne            & $82\,749\,141$  & $\approx 66{,}73\%$ \\
+    Zaokrąglone do 1 mln  & $109\,000\,000$ & $\approx 56{,}17\%$   \\
+    Wartość prawdziwa     & $248\,709\,873$ & ---                 \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:ekstrapolacja}
+\end{table}
+
+\noindent
+Jak widać, wielomian interpolacyjny stopnia~8 bardzo dobrze odwzorowuje
+dane w~przedziale węzłów (1900--1980), natomiast ekstrapolacja do~roku 1990
+daje znacznie błędny wynik (błąd $\approx 66{,}7\%$)~--- typowa słabość
+wielomianów wysokich stopni poza zakresem interpolacji. Zaokrąglenie danych
+do~miliona zmienia współczynniki wielomianu, co jeszcze bardziej wpływa
+na~wynik ekstrapolacji.
+
+
+% --- 1.4 Wnioski ---
+\subsection{Wnioski}
+
+\begin{enumerate}
+  \item Wybór bazy ma ogromny wpływ na uwarunkowanie macierzy Vandermonde'a.
+        Baza~1 (surowe lata) jest praktycznie bezużyteczna numerycznie
+        (cond $\approx 5{,}36 \times 10^{36}$, patrz Tabela~\ref{tab:cond_van}).
+        Baza~4 z~przesunięciem i~skalowaniem daje uwarunkowanie rzędu $10^3$,
+        co przekłada się na stabilne obliczenia.
+
+  \item Wszystkie trzy metody (baza~4, Lagrange, Newton) dają ten sam wielomian
+        stopnia~8 i~bardzo dobrze odwzorowują dane w~przedziale węzłów
+        (1900--1980). Różnice w~wynikach wynikają jedynie z~błędów zaokrąglenia.
+
+  \item Ekstrapolacja jest zawodna~--- nawet przy dobrej bazie. Wielomian
+        stopnia~8 dla danych oryginalnych przewidział populację w~1990 roku
+        na poziomie $82{,}7$~mln, przy prawdziwej wartości $248{,}7$~mln
+        (błąd $\approx 66{,}7\%$, patrz Tabela~\ref{tab:ekstrapolacja}).
+        Poza zakresem węzłów wielomian zachowuje się nieprzewidywalnie.
+
+  \item Zaokrąglenie danych do~1~mln zmieniło predykcję na $109$~mln
+        (błąd $\approx 56{,}2\%$). Choć błąd jest mniejszy, to wynik dalej
+        jest bardzo daleki od rzeczywistości. Wynika to z~wrażliwości
+        współczynników wielomianu na perturbacje w~danych wejściowych.
+\end{enumerate}
+
+% ============================================================
+\section{Zadanie 2 \textemdash{} Interpolacja produkcji cytrusów}
+% ============================================================
+
+% --- 2.1 Opis zadania ---
+\subsection{Opis zadania}
+
+Dane dotyczą rocznej produkcji cytrusów we Włoszech w~latach 1965--1991
+(6 punktów, nierównomiernie rozłożonych). Należy oszacować produkcję
+w~latach 1962, 1977 i~1992 (dwa przypadki interplanacji i~jeden ekstrapolacji)
+używając:
+\begin{itemize}
+  \item kubicznych funkcji sklejanych (natural, not-a-knot, clamped),
+  \item wielomianu interpolacyjnego Lagrange'a.
+\end{itemize}
+Prawdziwe wartości do porównania: 12\,380, 27\,403 i~32\,059
+($\times 10^5$~kg).
+
+% --- 2.2 Argumentacja ---
+\subsection{Argumentacja rozwiązania}
+
+\subsubsection{Kubiczne funkcje sklejane}
+
+Zamiast jednego wielomianu wysokiego stopnia, funkcje sklejane (splines)
+łączą kawałkowe wielomiany trzeciego stopnia tak, żeby na każdym węźle
+były ciągłe wraz z~pierwszą i~drugą pochodną. Poprawia to zachowanie
+na całym przedziale i~eliminuje efekt Rungego.
+
+Różnią się warunkami brzegowymi (co dzieje się na końcach przedziału):
+\begin{itemize}
+  \item \textbf{Natural}: druga pochodna na końcach równa zero
+        ($f''(x_0) = f''(x_n) = 0$). Spline „wygładza się" na końcach.
+  \item \textbf{Not-a-knot}: trzecia pochodna jest ciągła na pierwszym
+        i~ostatnim węźle wewnętrznym. Często daje dobre wyniki.
+  \item \textbf{Clamped}: narzucamy wartość pierwszej pochodnej na końcach
+        (tu: zero). Przydatne, gdy znamy nachylenie na krańcach.
+\end{itemize}
+
+\begin{lstlisting}[caption={Kubiczne funkcje sklejane -- trzy warianty}]
+from scipy.interpolate import CubicSpline
+
+cs_natural = CubicSpline(years2, production, bc_type='natural')
+cs_nak     = CubicSpline(years2, production, bc_type='not-a-knot')
+cs_clamped = CubicSpline(years2, production,
+                         bc_type=((1, 0.0), (1, 0.0)))
+\end{lstlisting}
+
+\subsubsection{Wielomian Lagrange'a na cytrusach}
+
+Użyto tej samej funkcji co w~zadaniu 1. Przy 6 węzłach otrzymujemy
+wielomian piątego stopnia. W~przypadku ekstrapolacji (rok 1992 jest
+poza zakresem danych) wielomian może mocno odbiegać od rzeczywistości.
+
+% --- 2.3 Wykresy i wyniki ---
+\subsection{Wykresy i wyniki liczbowe}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres4.png}
+  \caption{Kubiczne funkcje sklejane (trzy warianty) na tle węzłów
+           i~prawdziwych wartości dla lat 1962, 1977, 1992.}
+  \label{fig:splines}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres5.png}
+  \caption{Wielomian interpolacyjny Lagrange'a dla danych o~cytrusach.}
+  \label{fig:lagrange2}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{Wyestymowane wartości produkcji i~błędy względne dla roku 1962
+           (ekstrapolacja wsteczna).}
+  \begin{tabular}{lrr}
+    \toprule
+    Metoda & Estymacja [$10^5$ kg] & Błąd względny \\
+    \midrule
+    Wartość prawdziwa & 12\,380     & --- \\
+    Natural spline    & $\approx 13\,285$ & $\approx 7{,}31\%$ \\
+    Not-a-knot        & $\approx 5\,146$  & $\approx 58{,}43\%$ \\
+    Clamped           & $\approx 24\,313$ & $\approx 96{,}39\%$ \\
+    Lagrange          & $\approx -77\,765$ & $\approx 728{,}15\%$ \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:cytrusy_1962}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Wyestymowane wartości produkcji i~błędy względne dla roku 1977
+           (interpolacja wewnątrz przedziału).}
+  \begin{tabular}{lrr}
+    \toprule
+    Metoda & Estymacja [$10^5$ kg] & Błąd względny \\
+    \midrule
+    Wartość prawdziwa & 27\,403    & --- \\
+    Natural spline    & $\approx 22\,934$ & $\approx 16{,}31\%$ \\
+    Not-a-knot        & $\approx 22\,642$ & $\approx 17{,}37\%$ \\
+    Clamped           & $\approx 23\,126$ & $\approx 15{,}61\%$ \\
+    Lagrange          & $\approx 15\,405$ & $\approx 43{,}78\%$ \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:cytrusy_1977}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Wyestymowane wartości produkcji i~błędy względne dla roku 1992
+           (ekstrapolacja do przodu).}
+  \begin{tabular}{lrr}
+    \toprule
+    Metoda & Estymacja [$10^5$ kg] & Błąd względny \\
+    \midrule
+    Wartość prawdziwa & 32\,059    & --- \\
+    Natural spline    & $\approx 37\,798$ & $\approx 17{,}90\%$ \\
+    Not-a-knot        & $\approx 41\,894$ & $\approx 30{,}68\%$ \\
+    Clamped           & $\approx 22\,166$ & $\approx 30{,}86\%$ \\
+    Lagrange          & $\approx 43\,127$ & $\approx 34{,}52\%$ \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:cytrusy_1992}
+\end{table}
+
+% --- 2.4 Wnioski ---
+\subsection{Wnioski}
+
+\begin{enumerate}
+  \item Spline naturalny wypadł najlepiej przy ekstrapolacji wstecznej
+        (rok 1962, błąd $\approx 7{,}31\%$). Ma sensowne zachowanie na
+        krańcach, bo zeruje drugą pochodną i~nie ``szaleje'' poza zakresem.
+        Not-a-knot i~Clamped poradziły sobie znacznie gorzej
+        (odpowiednio $\approx 58\%$ i~$\approx 96\%$ błędu).
+
+  \item Przy interpolacji w~środku (rok 1977) wszystkie trzy spline'y
+        dały zbliżone błędy (ok.~$15$--$17\%$). Wielomian Lagrange'a
+        wypadł gorzej ($\approx 44\%$).
+
+  \item Ekstrapolacja do przodu (rok 1992) to najtrudniejszy przypadek.
+        Spline naturalny wypadł tu relatywnie najlepiej ($\approx 18\%$).
+        Not-a-knot i~Clamped osiągnęły podobny błąd ($\approx 31\%$).
+        Wielomian Lagrange'a dał $\approx 35\%$ błędu.
+
+  \item Lagrange przy ekstrapolacji wstecznej (rok 1962) całkowicie
+        zawiódł~--- estymacja wyniosła $-77\,765$, czyli wartość
+        ujemną przy prawdziwej wartości $12\,380$. Błąd to
+        ponad $728\%$. To pokazuje, jak niebezpieczny jest wielomian
+        wysokiego stopnia poza zakresem danych.
+
+  \item Funkcje sklejane są bezpieczniejsze od wielomianów wysokiego stopnia,
+        bo działają lokalnie~--- zaburzenie w~jednym miejscu nie propaguje
+        się na cały przedział.
+\end{enumerate}
+
+% ============================================================
+\section{Podsumowanie}
+% ============================================================
+
+\begin{enumerate}
+  \item \textbf{Wybór bazy ma znaczenie.} Przy macierzy Vandermonde'a złe
+        uwarunkowanie (baza $t^j$, cond~$\approx 5{,}36 \times 10^{36}$)
+        dosłownie niszczy wyniki. Przesunięcie i~skalowanie argumentu
+        (baza $((t-1940)/40)^j$, cond~$\approx 1{,}61 \times 10^{3}$)
+        poprawiło uwarunkowanie o~ponad 33 rzędy wielkości.
+
+  \item \textbf{Lagrange, Newton i równanie normalne to ten sam wielomian.}
+        Każda z~metod daje tę samą krzywą, różnią się tylko sposobem
+        reprezentacji i~stabilnością numeryczną.
+
+  \item \textbf{Ekstrapolacja jest zawodna.}
+        Wielomian stopnia~8 interpolujący populację USA (zadanie~1)
+        przy ekstrapolacji do roku 1990 dał błąd $\approx 66{,}7\%$.
+        Wielomian Lagrange'a dla cytrusów (zadanie~2) przy ekstrapolacji
+        wstecznej (rok~1962) zwrócił wartość ujemną~--- ponad $728\%$ błędu.
+        Wyniki potwierdzają, że poza zakresem węzłów rezultaty mogą być
+        zupełnie nierealne.
+
+  \item \textbf{Spline'y są lepszym wyborem w~praktyce.}
+        Przy interpolacji na rozłożonych nierównomiernie danych, kubiczne
+        funkcje sklejane zazwyczaj dają spokojniejszą i~bardziej
+        wiarygodną krzywą niż wielomian interpolacyjny.
+\end{enumerate}
+
+% ============================================================
+\section*{Bibliografia}
+\addcontentsline{toc}{section}{Bibliografia}
+% ============================================================
+
+\begin{thebibliography}{9}
+
+  \bibitem{lab03}
+  \textit{Wprowadzenie do laboratorium}, materia\l{}y dost\k{e}pne
+  na platformie Teams w~katalogu lab03.
+
+\end{thebibliography}
+
+\end{document}
