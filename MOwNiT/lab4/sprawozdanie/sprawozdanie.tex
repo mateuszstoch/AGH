@@ -1,0 +1,340 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- Pakiety ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% --- Zakaz dzielenia wyrazów ---
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% --- Zmiana nazwy float figure: Rysunek -> Wykres ---
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% --- Styl listingów ---
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  captionpos=b,
+  showstringspaces=false,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'{o}}}1
+            {ś}{{\'{s}}}1 {ł}{{\l{}}}1 {ź}{{\'{z}}}1
+            {ż}{{\.z}}1 {ć}{{\'{c}}}1 {ń}{{\'{n}}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'{O}}}1
+            {Ś}{{\'{S}}}1 {Ł}{{L}}1,
+}
+
+% --- Strona tytułowa ---
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 4 \textemdash{} Efekt Rungego i interpolacja
+}
+\author{Mateusz Stoch}
+\date{7 kwietnia 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1 \textemdash{} Średnia geometryczna odległości węzłów}
+% ============================================================
+
+% --- 1.1 Opis zadania ---
+\subsection{Opis zadania}
+
+Dla trzech rodzajów rozkładu węzłów interpolacji na przedziale $[-1,1]$:
+\begin{itemize}
+  \item węzłów Czebyszewa ($n = 5,\, 10,\, 20$),
+  \item węzłów Legendre'a ($n = 5,\, 10,\, 20$),
+  \item węzłów równomiernych ($n = 5,\, 10,\, 20$),
+\end{itemize}
+należy zwizualizować, jak rozkładają się węzły na przedziale, wykreślając
+dla każdego węzła $x_j$ jego \emph{średnią geometryczną odległości} do
+pozostałych węzłów:
+\[
+  G_j \;=\; \Bigl(\prod_{k \neq j} |x_j - x_k|\Bigr)^{\!1/(n-1)}.
+\]
+
+% --- 1.2 Argumentacja rozwiązania ---
+\subsection{Argumentacja rozwiązania}
+
+Średnia geometryczna odległości jest miarą tego, jak daleko od siebie
+są węzły w~pobliżu danego punktu. Dla węzłów równomiernych wartość ta
+jest niemal stała w~środku przedziału, ale drastycznie spada na
+krańcach, ponieważ węzły są tam zagęszczone dokładnie tak samo jak w~środku,
+więc odległości do sąsiadów są podobne, ale do odległych węzłów są duże.
+Węzły Czebyszewa i~Legendre'a zagęszczają się na brzegach przedziału, co
+niweluje efekt Rungego.
+\newpage
+\begin{lstlisting}[caption={Obliczanie i wizualizacja średniej geometrycznej odległości}]
+def plot_geometric_mean_distances(x_nodes, title_suffix='', ax=None):
+    n = len(x_nodes)
+    geo_means = np.zeros(n)
+    for i in range(n):
+        dists = np.abs(x_nodes[i] - np.delete(x_nodes, i))
+        geo_means[i] = np.prod(dists) ** (1.0 / (n - 1))
+    if ax is None:
+        fig, ax = plt.subplots()
+    ax.plot(x_nodes, geo_means, 'o-', markersize=4)
+    ax.set_xlabel('x')
+    ax.set_ylabel('Sr. geom. odleglosci')
+    ax.set_title(title_suffix)
+    return geo_means
+
+def chebyshev_nodes(n, a=-1, b=1):
+    j = np.arange(1, n + 1)
+    return 0.5*(a+b) + 0.5*(b-a)*np.cos((2*j-1)/(2*n)*np.pi)
+
+def legendre_nodes(n):
+    coeffs = np.zeros(n + 1)
+    coeffs[n] = 1.0
+    return legroots(coeffs)
+\end{lstlisting}
+
+% --- 1.3 Wykresy i wyniki ---
+\subsection{Wykresy i wyniki}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres1.png}
+  \caption{Średnia geometryczna odległości węzłów do pozostałych dla
+           trzech rodzajów węzłów i~trzech wartości~$n$.}
+  \label{fig:geo_means}
+\end{figure}
+
+% --- 1.4 Wnioski ---
+\subsection{Wnioski}
+
+\begin{enumerate}
+  \item Węzły równomierne dają prawie stałą średnią geometryczną w~środku
+        przedziału, ale wartości na jego krańcach są wyraźnie niższe.
+        Oznacza to, że kraje przedziału są słabo ``pokryte``, przy
+        interpolacji wielomianem Lagrange'a stąd wynika efekt Rungego:
+        duże oscylacje na brzegach.
+
+  \item Węzły Czebyszewa i~Legendre'a mają podobny wzorzec, są
+        zagęszczone przy krańcach przedziału, co sprawia że średnia
+        geometryczna odległości jest tam wyraźnie mniejsza niż w~środku,
+        ale za to znacznie bardziej równomiernie rozłożona. To właśnie
+        ta własność chroni przed efektem Rungego.
+
+  \item Węzły Czebyszewa i~Legendre'a dają niemal identyczne wyniki,
+        obie te rodziny węzłów są splecione z~teorią wielomianów
+        ortogonalnych i~obie dają zbliżone gwarancje numeryczne.
+\end{enumerate}
+
+% ============================================================
+\section{Zadanie 2 \textemdash{} Interpolacja i efekt Rungego}
+% ============================================================
+
+% --- 2.1 Opis zadania ---
+\subsection{Opis zadania}
+
+Celem zadania jest interpolacja dwóch funkcji:
+\[
+  f_1(x) = \frac{1}{1 + 25x^2}, \quad x \in [-1, 1]
+\]
+\[
+  f_2(x) = e^{\cos(x)}, \quad x \in [0, 2\pi]
+\]
+za pomocą trzech metod:
+\begin{itemize}
+  \item wielomianu Lagrange'a z~węzłami równomiernie rozmieszczonymi,
+  \item kubicznych funkcji sklejanych z~węzłami równomiernie rozmieszczonymi,
+  \item wielomianu Lagrange'a z~węzłami Czebyszewa.
+\end{itemize}
+
+Część (a) dotyczy wykresu porównawczego dla $f_1$ z~$n = 12$ węzłami.
+Część (b) bada jak zmienia się norma błędu przy zwiększaniu $n$ od~4
+do~50.
+
+% --- 2.2 Argumentacja rozwiązania ---
+\subsection{Argumentacja rozwiązania}
+
+\subsubsection{Interpolacja barycentryczna Lagrange'a}
+
+Zamiast klasycznego wzoru Lagrange'a (który jest niestabilny), implementuje
+się interpolację barycentryczną. Polega ona na obliczeniu wag $w_j$:
+\[
+  w_j = \frac{1}{\displaystyle\prod_{k \neq j}(x_j - x_k)},
+\]
+a następnie ewaluacji:
+\[
+  p(x) = \frac{\displaystyle\sum_j \frac{w_j}{x - x_j}\, y_j}
+              {\displaystyle\sum_j \frac{w_j}{x - x_j}}.
+\]
+Ta forma jest numerycznie znacznie bardziej stabilna.
+\newpage
+\begin{lstlisting}[caption={Interpolacja barycentryczna Lagrange'a}]
+def lagrange_barycentric(x_nodes, y_nodes, x_eval):
+    n = len(x_nodes)
+    w = np.ones(n)
+    for j in range(n):
+        for k in range(n):
+            if k != j:
+                w[j] /= (x_nodes[j] - x_nodes[k])
+    x_eval = np.asarray(x_eval, dtype=float)
+    result = np.zeros_like(x_eval)
+    for i, xi in enumerate(x_eval):
+        diffs = xi - x_nodes
+        zero_idx = np.where(diffs == 0)[0]
+        if len(zero_idx) > 0:
+            result[i] = y_nodes[zero_idx[0]]
+        else:
+            terms = w / diffs
+            result[i] = np.dot(terms, y_nodes) / np.sum(terms)
+    return result
+\end{lstlisting}
+
+\subsubsection{Węzły Czebyszewa}
+
+Węzły Czebyszewa na przedziale $[a, b]$ są zdefiniowane jako:
+\[
+  x_j = \frac{a+b}{2} + \frac{b-a}{2}\cos\!\left(\frac{2j-1}{2n}\pi\right),
+  \quad j = 1, \ldots, n.
+\]
+Minimalizują one maksymalny błąd interpolacji i~eliminują efekt Rungego.
+
+\subsubsection{Funkcje sklejane}
+
+Do interpolacji użyto \texttt{CubicSpline} z~biblioteki SciPy, który
+dopasowuje kawałkowe wielomiany stopnia~3 z~zachowaniem ciągłości
+i~gładkości na węzłach.
+
+\begin{lstlisting}[caption={Interpolacja kubiczną funkcją sklejaną}]
+cs_unif = CubicSpline(x_unif, y_unif)
+y_spline_unif = cs_unif(x_dense_unif)
+\end{lstlisting}
+
+% --- 2.3 Wykresy i wyniki ---
+\subsection{Wykresy i wyniki liczbowe}
+
+\subsubsection{(a) Interpolacja $f_1$ przy $n=12$ węzłach}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres2.png}
+  \caption{Porównanie metod interpolacji funkcji Rungego $f_1(x)$ przy
+           $n = 12$ węzłach.}
+  \label{fig:runge_n12}
+\end{figure}
+
+Widać wyraźnie, że Lagrange z~węzłami równomiernie rozmieszczonymi mocno
+oscyluje przy krańcach przedziału (efekt Rungego). Funkcja sklejana
+i~Lagrange z~węzłami Czebyszewa radzą sobie znacznie lepiej.
+
+\subsubsection{(b) Norma błędu vs. liczba węzłów}
+
+Błąd interpolacji mierzony jest jako norma $\|\mathbf{e}\|_2$ na 500
+losowo wybranych punktach testowych.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres3.png}
+  \caption{Norma błędu interpolacji $f_1(x) = 1/(1+25x^2)$ w~zależności
+           od liczby węzłów $n$ (skala logarytmiczna na osi~$y$).}
+  \label{fig:error_f1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres4.png}
+  \caption{Norma błędu interpolacji $f_2(x) = e^{\cos(x)}$ w~zależności
+           od liczby węzłów $n$ (skala logarytmiczna na osi~$y$).}
+  \label{fig:error_f2}
+\end{figure}
+
+% --- 2.4 Wnioski ---
+\subsection{Wnioski}
+
+\begin{enumerate}
+  \item Dla funkcji Rungego $f_1(x)$ Lagrange z~węzłami równomiernie
+        rozmieszczonymi jest zdecydowanie najgorszy, błąd rośnie wraz
+        z~$n$, co jest doskonałym przykładem efektu Rungego. Dodawanie
+        kolejnych węzłów zamiast poprawiać aproksymację, tylko ją
+        pogarsza.
+
+  \item Lagrange z~węzłami Czebyszewa eliminuje efekt Rungego, błąd
+        maleje monotonicznie wraz ze wzrostem $n$. Zmiana wyboru węzłów
+        (przy tej samej metodzie interpolacji) całkowicie zmienia
+        zachowanie metody.
+
+  \item Kubiczna funkcja sklejana z~węzłami równomiernie rozmieszczonymi
+        zachowuje się dobrze dla obu funkcji, błąd maleje monotonicznie
+        i~osiąga niskie wartości. Funkcje sklejane działają lokalnie,
+        więc efekt Rungego nie może się propagować na cały przedział.
+
+  \item \textbf{Podsumowanie:} Najdokładniejszą metodą (w~sensie
+        najszybszego zaniku błędu) okazuje się Lagrange z~węzłami
+        Czebyszewa. Funkcja sklejana jest bardzo dobrą i~bezpieczną
+        alternatywą, działa dobrze nawet przy równomiernie
+        rozmieszczonych węzłach. Lagrange z~węzłami równomiernie
+        rozmieszczonymi jest metodą najmniej dokładną dla funkcji
+        z~ostrymi zmianami.
+\end{enumerate}
+
+% ============================================================
+\section{Podsumowanie}
+% ============================================================
+
+\begin{enumerate}
+  \item \textbf{Efekt Rungego} jest realnym problemem w~interpolacji
+        wielomianowej. Przy węzłach równomiernie rozmieszczonych zwiększanie
+        liczby węzłów może pogorszyć aproksymację, a~nie ją poprawić.
+
+  \item \textbf{Wybór węzłów ma kluczowe znaczenie.} Węzły Czebyszewa
+        (i~podobnie Legendre'a) minimalizują błąd interpolacji i~eliminują
+        efekt Rungego. Różnica pomiędzy nimi a~węzłami równomiernie
+        rozmieszczonymi widoczna jest wyraźnie w~rozkładzie średniej
+        geometrycznej odległości.
+
+  \item \textbf{Funkcje sklejane są bezpiecznym i~praktycznym wyborem.}
+        Nawet przy równomiernie rozmieszczonych węzłach dają dobre
+        wyniki,działają lokalnie, a zaburzenie w~jednym miejscu nie
+        wpływa na cały przedział.
+
+  \item \textbf{Interpolacja barycentryczna Lagrange'a} jest numerycznie
+        stabilną implementacją wzoru Lagrange'a i~powinna być preferowana
+        nad klasyczną postacią.
+\end{enumerate}
+
+\end{document}
