@@ -1,0 +1,424 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- Pakiety ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% --- Zakaz dzielenia wyrazów ---
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% --- Zmiana nazwy float figure: Rysunek -> Wykres ---
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% --- Styl listingów ---
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b,
+  showstringspaces=false,
+  columns=flexible,
+  keepspaces=true,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'{o}}}1
+            {ś}{{\'{s}}}1 {ł}{{\l{}}}1 {ź}{{\'{z}}}1
+            {ż}{{\.z}}1 {ć}{{\'{c}}}1 {ń}{{\'{n}}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'{O}}}1
+            {Ś}{{\'{S}}}1 {Ł}{{L}}1,
+}
+
+% --- Strona tytułowa ---
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 5 \textemdash{} Aproksymacja
+}
+\author{Mateusz Stoch}
+\date{14 kwietnia 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1 \textemdash{} Aproksymacja populacji USA}
+% ============================================================
+
+% --- 1.1 Opis zadania ---
+\subsection{Opis zadania}
+
+Dane wejściowe to populacja Stanów Zjednoczonych w~latach 1900--1980
+(9~punktów co 10 lat). Należy:
+\begin{enumerate}
+  \item[(a)] Wykonać aproksymację średniokwadratową wielomianami stopnia
+             $m = 0, 1, \ldots, 6$ i ekstrapolować każdy wielomian do
+             roku~1990. Porównać wyniki z~prawdziwą wartością
+             248\,709\,873 i znaleźć stopień $m$ dający najmniejszy
+             błąd względny.
+  \item[(b)] Wyznaczyć optymalny stopień~$m$ za pomocą kryterium
+             informacyjnego Akaikego ze składnikiem korygującym
+             (AICc) i sprawdzić, czy pokrywa się on z~wynikiem
+             z~punktu (a).
+\end{enumerate}
+
+% --- 1.2 Argumentacja rozwiązania ---
+\subsection{Argumentacja rozwiązania}
+
+\subsubsection{Normalizacja argumentu}
+
+Dane obejmują lata 1900--1990. Używanie surowych lat jako argumentów
+wielomianu prowadziłoby do ogromnych wartości liczbowych i złego
+uwarunkowania macierzy układu. Dlatego argumenty normalizuje się do
+przedziału $[-1, 1]$:
+\[
+  t = \frac{\text{rok} - 1940}{40}.
+\]
+Rok 1990 odpowiada $t_{1990} = (1990 - 1940) / 40 = 1{,}25$.
+
+\subsubsection{Aproksymacja średniokwadratowa}
+
+Aproksymacja różni się od interpolacji, ponieważ nie wymaga, by wielomian
+dokładnie przechodził przez węzły. Szukamy wielomianu $\hat{y}(t)$,
+który \emph{minimalizuje} sumę kwadratów odchyleń:
+\[
+  \min_{\mathbf{c}} \sum_{i=1}^{n} \bigl[y_i - \hat{y}(t_i)\bigr]^2.
+\]
+W~praktyce sprowadza się to do rozwiązania układu \emph{normalnych
+równań} lub rozwiązania zadania metodą najmniejszych kwadratów
+(np.~\texttt{np.linalg.lstsq}).
+
+\begin{lstlisting}[caption={Dopasowanie wielomianu stopnia m metodą najmniejszych kwadratów}]
+def fit_polynomial_ls(t_data, y_data, m):
+    A = np.vander(t_data, N=m + 1, increasing=True)
+    c, residuals, rank, sv = np.linalg.lstsq(A, y_data, rcond=None)
+    return c
+\end{lstlisting}
+
+\subsubsection{Kryterium AICc}
+
+Kryterium informacyjne Akaikego pozwala wybrać kompromis między
+dokładnością modelu a jego złożonością. Dla próbki o małym rozmiarze
+($n/k < 40$, gdzie $k = m + 1$) stosuje się wersję skorygowaną:
+\[
+  \text{AIC} = 2k + n \ln\!\left(\frac{\mathrm{SSE}}{n}\right),
+  \qquad
+  \text{AICc} = \text{AIC} + \frac{2k(k+1)}{n - k - 1},
+\]
+gdzie $\mathrm{SSE} = \sum_{i=1}^{n}[y_i - \hat{y}(t_i)]^2$.
+Mniejsza wartość AICc odpowiada lepszemu modelowi.
+
+% --- 1.3 Wyniki ---
+\subsection{Wykresy i wyniki}
+
+\subsubsection{(a) Ekstrapolacja do 1990}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres1.png}
+  \caption{Wielomiany aproksymujące populację USA (stopnie $m = 0 \ldots 6$)
+           z ekstrapolacją do roku~1990. Punkty danych: 1900--1980.}
+  \label{fig:aprox_usa}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{Ekstrapolacja do roku 1990 -- porównanie wyników.}
+  \begin{tabular}{rrr}
+    \toprule
+    $m$ & Predykcja 1990 & Błąd względny [\%] \\
+    \midrule
+    0 & 143\,369\,177 & $\approx 42{,}35\%$ \\
+    1 & 235\,808\,109 & $\approx 5{,}19\%$  \\
+    2 & 254\,712\,945 & $\approx 2{,}41\%$  \\
+    3 & 261\,439\,380 & $\approx 5{,}12\%$  \\
+    4 & 243\,106\,971 & $\approx 2{,}25\%$  \\
+    5 & 220\,442\,802 & $\approx 11{,}37\%$ \\
+    6 & 255\,044\,185 & $\approx 2{,}55\%$  \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:ekstrapolacja_usa}
+\end{table}
+
+\noindent
+Prawdziwa populacja w 1990: 248\,709\,873.\\
+\textbf{Najmniejszy błąd względny dla $m = 4$: $\approx 2{,}25\%$.}
+
+\subsubsection{(b) Kryterium AICc}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres2.png}
+  \caption{Wartości AICc dla wielomianów stopnia $m = 0 \ldots 6$.}
+  \label{fig:aicc}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{Zestawienie wartości SSE, AIC i~AICc dla każdego stopnia.}
+  \begin{tabular}{rrrrrr}
+    \toprule
+    $m$ & $k{=}m{+}1$ & $n/k$ & SSE & AIC & AICc \\
+    \midrule
+    0 & 1 & 9{,}00 & $2{,}09 \times 10^{16}$ & 320{,}44 & 321{,}01 \\
+    1 & 2 & 4{,}50 & $4{,}10 \times 10^{14}$ & 287{,}06 & 289{,}06 \\
+    2 & 3 & 3{,}00 & $8{,}28 \times 10^{13}$ & 274{,}65 & 279{,}45 \\
+    3 & 4 & 2{,}25 & $6{,}80 \times 10^{13}$ & 274{,}88 & 284{,}88 \\
+    4 & 5 & 1{,}80 & $3{,}51 \times 10^{13}$ & 270{,}93 & 290{,}93 \\
+    5 & 6 & 1{,}50 & $2{,}33 \times 10^{13}$ & 269{,}26 & 311{,}26 \\
+    6 & 7 & 1{,}29 & $1{,}87 \times 10^{13}$ & 269{,}27 & 381{,}27 \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:aicc_usa}
+\end{table}
+
+\noindent
+\textbf{Najmniejsze AICc dla $m = 2$ (AICc = 279{,}45).}\\
+Najlepszy błąd ekstrapolacji: $m = 4$, wyniki się \textbf{nie pokrywają}.
+
+% --- 1.4 Wnioski ---
+\subsection{Wnioski}
+
+\begin{enumerate}
+  \item Wielomian stopnia~0 (stała) dał błąd ponad $42\%$, ponieważ
+        nie jest w stanie opisać żadnego trendu.
+
+  \item Wielomian liniowy ($m = 1$) znacznie lepiej opisuje dane
+        (błąd $\approx 5\%$), ale nadal zbyt prosto odwzorowuje
+        krzywoliniowy trend populacji.
+
+  \item Najlepszą predykcję dla roku~1990 dał wielomian stopnia~4
+        ($\approx 2{,}25\%$ błędu). Jednocześnie AICc wybiera $m = 2$
+        jako kompromis między jakością dopasowania a ryzykiem
+        przeuczenia. Rozbieżność wynika z tego, że AICc ``karze''
+        modele wieloparametrowe przy małych zbiorach danych, czyli gdy
+        $n = 9$ i $k$ rośnie, $n/k$ gwałtownie maleje, a składnik
+        karny rośnie.
+
+  \item Modele o wyższych stopniach ($m = 5, 6$) dobrze dopasowują
+        dane treningowe (SSE maleje), ale gorzej ekstrapolują (błąd
+        rośnie), co jest klasycznym objawem przeuczenia.
+
+  \item AICc stara się ten problem wykryć \emph{bez} zestawu
+        testowego, za pomocą kryterium opartego na danych
+        treningowych. W~tym zadaniu sprawdza się, ponieważ chroni
+        przed wyborem zbyt złożonego modelu.
+\end{enumerate}
+
+% ============================================================
+\section{Zadanie 2 \textemdash{} Aproksymacja $\sqrt{x}$ wielomianami Czebyszewa}
+% ============================================================
+
+% --- 2.1 Opis zadania ---
+\subsection{Opis zadania}
+
+Należy wykonać aproksymację ciągłą funkcji $f(x) = \sqrt{x}$
+na~przedziale~$[0, 2]$ wielomianem drugiego stopnia, korzystając
+z~wielomianów Czebyszewa jako bazy. Cel jest znalezienie wielomianu
+\[
+  p_2(x) = c_0 T_0(x') + c_1 T_1(x') + c_2 T_2(x'),
+\]
+gdzie $x' = x - 1$ przelicza $[0,2]$ na~$[-1,1]$,
+a~$T_k$ to $k$-ty wielomian Czebyszewa.
+
+% --- 2.2 Argumentacja rozwiązania ---
+\subsection{Argumentacja rozwiązania}
+
+\subsubsection{Wielomiany Czebyszewa}
+
+Wielomiany Czebyszewa $T_k(\xi)$ są zdefiniowane rekurencyjnie:
+\[
+  T_0(\xi) = 1,\quad T_1(\xi) = \xi,\quad
+  T_{k+1}(\xi) = 2\xi T_k(\xi) - T_{k-1}(\xi).
+\]
+Tworzą one bazę ortogonalną na~$[-1,1]$ z wagą
+$w(\xi) = 1/\sqrt{1 - \xi^2}$:
+\[
+  \int_{-1}^{1} T_i(\xi) T_j(\xi)\, \frac{d\xi}{\sqrt{1-\xi^2}}
+  = \begin{cases} 0 & i \neq j \\ \pi/2 & i = j \neq 0 \\ \pi & i = j = 0. \end{cases}
+\]
+
+\subsubsection{Wyznaczanie współczynników}
+
+Z ortogonalności wynika wzór na współczynniki:
+\[
+  c_k = \frac{2}{\pi} \int_{-1}^{1} f(x') T_k(\xi)\,
+        \frac{d\xi}{\sqrt{1-\xi^2}}, \qquad k > 0,
+\]
+(dla $c_0$ czynnik $2/\pi$ zastępuje się $1/\pi$). Całkę oblicza
+się numerycznie kwadraturą Gaussa--Czebyszewa:
+\[
+  \int_{-1}^{1} g(\xi) \frac{d\xi}{\sqrt{1-\xi^2}}
+  \approx \frac{\pi}{N} \sum_{j=1}^{N} g\!\left(\cos\!\frac{(2j-1)\pi}{2N}\right).
+\]
+
+\noindent
+Poniżej kluczowe fragmenty implementacji:
+
+\begin{lstlisting}[caption={Rekurencyjne obliczanie wielomianów Czebyszewa}]
+def chebyshev_T(k, t):
+    if k == 0:
+        return np.ones_like(t, dtype=float)
+    elif k == 1:
+        return np.asarray(t, dtype=float).copy()
+    else:
+        T_prev2 = np.ones_like(t, dtype=float)
+        T_prev1 = np.asarray(t, dtype=float).copy()
+        for _ in range(2, k + 1):
+            T_curr = 2 * t * T_prev1 - T_prev2
+            T_prev2 = T_prev1
+            T_prev1 = T_curr
+        return T_curr
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Wyznaczanie wspólczynników aproksymacji Czebyszewa}]
+N_quad = 500
+j_idx  = np.arange(1, N_quad + 1)
+theta_j = (2 * j_idx - 1) * np.pi / (2 * N_quad)
+t_j = np.cos(theta_j)      # wezly Gaussa-Czebyszewa
+x_j = t_j + 1              # przedzial [0, 2]
+f_j = np.sqrt(x_j)
+
+deg = 2
+c = np.zeros(deg + 1)
+c[0] = np.sum(f_j) / N_quad
+for k in range(1, deg + 1):
+    c[k] = 2.0 / N_quad * np.sum(f_j * np.cos(k * theta_j))
+\end{lstlisting}
+
+% --- 2.3 Wyniki ---
+\subsection{Wyniki}
+
+\noindent
+Wyznaczone współczynniki (w~bazie Czebyszewa, na~$[-1, 1]$):
+\[
+  c_0 \approx 0{,}9003, \quad c_1 \approx 0{,}6002, \quad
+  c_2 \approx -0{,}1200.
+\]
+
+\noindent
+Wielomian w~postaci standardowej:
+\[
+  p(x) \approx 0{,}1801 + 1{,}0804 \cdot x - 0{,}2401 \cdot x^2.
+\]
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres3.png}
+  \caption{Aproksymacja $f(x) = \sqrt{x}$ wielomianem 2. stopnia
+           (baza Czebyszewa) i~wykres błędu bezwzględnego.}
+  \label{fig:cheb_approx}
+\end{figure}
+
+\noindent
+Błędy aproksymacji:
+\begin{itemize}
+  \item Maksymalny błąd bezwzględny: $\|f - p\|_\infty \approx 1{,}80 \times 10^{-1}$
+  \item Błąd $L_2 \approx 5{,}21 \times 10^{-2}$
+\end{itemize}
+
+\subsubsection{Porównanie z~klasyczną metodą MNK}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres4.png}
+  \caption{Porównanie aproksymacji Czebyszewa z~klasycznym wielomianem
+           MNK stopnia~2 oraz wykresy błędów obu metod.}
+  \label{fig:mnk_vs_cheb}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres5.png}
+  \caption{Zestawienie błędów aproksymacji Czebyszewa i~MNK
+           na~przedziale $[0, 2]$.}
+  \label{fig:errors_comparison}
+\end{figure}
+
+% --- 2.4 Wnioski ---
+\subsection{Wnioski}
+
+\begin{enumerate}
+  \item Baza Czebyszewa daje \emph{aproksymację quasi-jednostajną},
+        ponieważ minimalizuje maksymalne odchylenie od funkcji
+        globalnie na~całym przedziale.
+
+  \item Standardowa aproksymacja MNK minimalizuje sumę kwadratów
+        odchyleń (norma~$L_2$), co może prowadzić do większych błędów
+        w~skrajnych punktach przedziału w~porównaniu z~metodą
+        Czebyszewa.
+
+  \item Metoda Czebyszewa jest numerycznie stabilna ze~względu na
+        ortogonalność bazy, a współczynniki wyznacza się niezależnie,
+        bez rozwiązywania układu równań.
+
+  \item Aproksymacja wielomianami Czebyszewa jest \emph{tania
+        obliczeniowo}, ponieważ zamiast rozwiązywać układ $m \times m$,
+        obliczamy $m$ niezależnych całek.
+
+  \item Dla $m = 2$ błąd $L_2 \approx 5{,}21 \times 10^{-2}$, co
+        jest dobrym wynikiem dla wielomianu tak niskiego stopnia
+        na~przedziale $[0, 2]$.
+\end{enumerate}
+
+% ============================================================
+\section{Podsumowanie}
+% ============================================================
+
+\begin{enumerate}
+  \item \textbf{Aproksymacja a interpolacja.} Aproksymacja nie musi
+        przechodzić przez węzły, dzięki czemu jest odporna na szum
+        w~danych i unika problemów z przeuczeniem.
+
+  \item \textbf{Wybór stopnia wielomianu.} Zbyt niski stopień
+        (underfitting) oznacza, że model nie opisuje trendu. Zbyt
+        wysoki (overfitting) oznacza, że model uczy się szumu i
+        źle generalizuje. Kryterium AICc pozwala automatycznie
+        wybrać kompromis bez potrzeby posiadania zestawu testowego.
+
+  \item \textbf{Baza Czebyszewa} jest lepszym wyborem niż baza
+        potęgowa dla aproksymacji ciągłej, ponieważ jest stabilna
+        numerycznie, daje aproksymację quasi-jednostajną i może
+        zastąpić kosztowną aproksymację minimax.
+
+  \item \textbf{Normalizacja dziedziny} (np.~liniowe przekształcenie
+        do $[-1, 1]$) jest niezbędna, by uniknąć złego uwarunkowania
+        macierzy przy użyciu bazy potęgowej lub Czebyszewa.
+\end{enumerate}
+
+\end{document}
