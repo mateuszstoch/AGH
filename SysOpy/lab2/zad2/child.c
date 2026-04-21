@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <string.h>
 
+/* Globalny tryb ustawiony przez USR2 */
+static int current_mode = -1;
+
 /* Handler dla SIGUSR1 w trybie "handle" */
 void signal_handler(int signo) {
     printf("[child] Wywołano handler dla sygnału %d\n", signo);
@@ -20,14 +23,14 @@ void usr2_handler(int signo, siginfo_t *info, void *context) {
     printf("[child] Otrzymano sygnał USR2 (%d), wartość: %d\n", signo, info->si_value.sival_int);
     fflush(stdout);
 
-    int mode = info->si_value.sival_int;
+    current_mode = info->si_value.sival_int;
 
     struct sigaction sa;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
 
     /* Ustawiamy reakcję na SIGUSR1 na podstawie wartości z sigqueue */
-    switch (mode) {
+    switch (current_mode) {
         case 0: /* default */
             printf("[child] Wywołano funkcję 'sig_default()'\n");
             sa.sa_handler = SIG_DFL;
@@ -35,12 +38,7 @@ void usr2_handler(int signo, siginfo_t *info, void *context) {
             break;
         case 1: /* mask */
             printf("[child] Wywołano funkcję 'sig_mask()'\n");
-            {
-                sigset_t mask;
-                sigemptyset(&mask);
-                sigaddset(&mask, SIGUSR1);
-                sigprocmask(SIG_BLOCK, &mask, NULL);
-            }
+            /* Blokadę nakładamy po powrocie z sigsuspend — patrz main() */
             break;
         case 2: /* ignore */
             printf("[child] Wywołano funkcję 'sig_ignore()'\n");
@@ -88,7 +86,20 @@ int main() {
     /* sigsuspend atomowo: odblokuje SIGUSR2 i usypia proces aż do sygnału */
     sigsuspend(&oldset);
 
-    /* Od tego momentu mamy już ustawioną reakcję na SIGUSR1 */
+    /*
+     * Po powrocie z sigsuspend maska jest przywrócona do stanu sprzed wywołania
+     * (tzn. tylko SIGUSR2 zablokowany). Jeśli tryb to "mask", musimy teraz
+     * ponownie zablokować SIGUSR1 — handler w trakcie sigsuspend nie mógł
+     * tego zrobić trwale, bo maska jest resetowana przy powrocie.
+     */
+    if (current_mode == 1) {
+        sigset_t mask;
+        sigemptyset(&mask);
+        sigaddset(&mask, SIGUSR1);
+        sigprocmask(SIG_BLOCK, &mask, NULL);
+        printf("[child] Zablokowano SIGUSR1 (tryb mask)\n");
+        fflush(stdout);
+    }
 
     /* Pętla główna — identyczna jak w zad1 */
     for (int i = 1; i <= 20; i++) {
