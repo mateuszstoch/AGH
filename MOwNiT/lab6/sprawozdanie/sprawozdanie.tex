@@ -1,0 +1,286 @@
+\documentclass[12pt, a4paper]{article}
+
+% Pakiety
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% Zakaz dzielenia wyrazów
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% Zmiana nazwy float figure: Rysunek -> Wykres
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% Styl listingów
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b,
+  showstringspaces=false,
+  columns=flexible,
+  keepspaces=true,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'{o}}}1
+            {ś}{{\'{s}}}1 {ł}{{\l{}}}1 {ź}{{\'{z}}}1
+            {ż}{{\.z}}1 {ć}{{\'{c}}}1 {ń}{{\'{n}}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'{O}}}1
+            {Ś}{{\'{S}}}1 {Ł}{{L}}1,
+}
+
+% Strona tytułowa
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 6 \textendash{} Kwadratury, część I
+}
+\author{Mateusz Stoch}
+\date{21 kwietnia 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1 \textendash{} Złożone kwadratury otwarte}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Celem zadania jest numeryczne obliczenie całki:
+\[
+  \int_0^1 \frac{4}{1+x^2}\, dx = \pi
+\]
+za pomocą trzech złożonych kwadratur Newtona-Cotesa: prostokątów (ang. mid-point rule), trapezów oraz Simpsona. Na przedziale całkowania należy rozmieścić $2^m + 1$ równoodległych węzłów, gdzie $m$ przyjmuje wartości od 1 do 25. Oznacza to podwajanie liczby podprzedziałów w każdym kroku, w konsekwencji zagęszczając siatkę.
+
+Następnie dla każdej metody sporządza się wykres błędu względnego w~zależności od liczby ewaluacji funkcji (w skali logarytmicznej) oraz analizuje zbieżność i dominację błędu numerycznego.
+
+\subsection{Argumentacja rozwiązania}
+
+Kwadratury prostokątów, trapezów i Simpsona to podstawowe techniki numerycznego całkowania. Metoda prostokątów wykorzystuje środek każdego podprzedziału, trapezy bazują na polu trapezu pod funkcją, natomiast Simpson przybliża fragmenty funkcji parabolami.
+
+W środowisku SciPy i NumPy zaimplementowano je następująco:
+\begin{itemize}
+    \item \texttt{scipy.integrate.trapezoid} oraz \texttt{scipy.integrate.simpson} dla trapezów i Simpsona.
+    \item Metodę prostokątów zaprogramowano ręcznie, sumując wartości funkcji w punktach środkowych podprzedziałów i mnożąc przez ich szerokość $h$.
+\end{itemize}
+
+Oto fragment kodu realizujący obliczenia dla podanej całki:
+\begin{lstlisting}[caption={Wyznaczanie całki za pomocą kwadratur złożonych}]
+def f(x):
+    x = np.float64(x)
+    return np.float64(4.0) / (np.float64(1.0) + x**2)
+
+n = 2**m
+x = np.linspace(0, 1, n + 1, dtype=np.float64)
+y = f(x)
+h = np.float64(x[1] - x[0])
+
+# Trapezy i Simpson
+I_trap = np.float64(integrate.trapezoid(y, x))
+I_simp = np.float64(integrate.simpson(y, x=x))
+
+# Prostokaty (mid-point)
+x_mid = (x[:-1] + x[1:]) / np.float64(2.0)
+I_mid = h * np.sum(f(x_mid))
+\end{lstlisting}
+
+\subsection{Wykresy i wyniki}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres1.png}
+  \caption{Wartość bezwzględna błędu względnego dla metod złożonych w zależności od liczby ewaluacji funkcji (n+1).}
+  \label{fig:zlozone}
+\end{figure}
+
+Dla metody trapezów minimalna liczba ewaluacji wynosi około $8{,}3 \times 10^6$ (h około $1{,}19 \times 10^{-7}$), przy której błąd względny to zaledwie $2{,}54 \times 10^{-15}$.
+
+Rzędy zbieżności w obszarze, w którym błąd metody dominuje nad numerycznym:
+\begin{itemize}
+    \item Prostokątów: $1{,}92$ (wartość teoretyczna $2$)
+    \item Trapezów: $2{,}00$ (wartość teoretyczna $2$)
+    \item Simpsona: $6{,}50$ (wartość teoretyczna $4$, natomiast przy specyficznej funkcji i siatce błąd spada bardzo gwałtownie przed wejściem w szum zmiennoprzecinkowy).
+\end{itemize}
+
+\subsection{Wnioski}
+
+\begin{enumerate}
+    \item Istnieje wartość $h_{\text{min}}$, poniżej której zmniejszanie kroku nie tylko nie poprawia dokładności, ale wręcz ją pogarsza. Wynika to z ograniczonej precyzji obliczeń zmiennoprzecinkowych (\texttt{float64}), która daje około 15--16 cyfr znaczących. 
+    \item Przy bardzo dużej liczbie węzłów sumowane jest mnóstwo ułamków, w związku z czym narasta błąd zaokrągleń (błąd numeryczny), przykrywając błąd samej metody (błąd obcięcia).
+    \item Z wykresu widać, że metoda Simpsona zbiega najszybciej. Jej wykres błędu gwałtownie opada i jako pierwszy uderza w podłogę ustaloną przez podwójną precyzję maszyny, oscylując tam dla większej liczby węzłów.
+\end{enumerate}
+
+% ============================================================
+\section{Zadanie 2 \textendash{} Kwadratura Gaussa-Legendre'a}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Zadanie polega na obliczeniu tej samej całki przy wykorzystaniu kwadratury Gaussa-Legendre'a. Sprawdzane jest zachowanie błędu względnego dla rosnącej liczby ewaluacji funkcji od 1 do około 30, w celu ukazania momentu napotkania szumu numerycznego.
+
+\subsection{Argumentacja rozwiązania}
+
+Kwadratura Gaussa-Legendre'a różni się od kwadratur Newtona-Cotesa punktami całkowania. Węzły nie są rozmieszczone równomiernie, lecz odpowiadają pierwiastkom wielomianów Legendre'a, a każdemu węzłowi przypisana jest określona waga. Pozwala to na dokładne całkowanie wielomianów aż do stopnia $2n-1$ przy zaledwie $n$ węzłach.
+
+Współczynniki pobierano funkcją \texttt{leggauss}, a przedział standardowy od $-1$ do $1$ został przekształcony afinicznie na docelowy od $0$ do $1$.
+\begin{lstlisting}[caption={Implementacja całki kwadraturą Gaussa}]
+xi, wi = leggauss(n)
+# Przeksztalcenie do [0, 1]
+x_mapped = np.float64(0.5) * (xi + np.float64(1.0))
+w_mapped = np.float64(0.5) * wi
+
+I_gl = np.dot(w_mapped, f(x_mapped))
+\end{lstlisting}
+
+\subsection{Wyniki}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres2.png}
+  \caption{Błąd względny dla kwadratury Gaussa-Legendre'a w zależności od liczby punktów obliczeń.}
+  \label{fig:gauss}
+\end{figure}
+
+Metoda Gaussa-Legendre'a osiąga doskonałe rezultaty i zbliża się do zera w granicach dokładności maszynowej (\texttt{float64}) już przy $n=17$ punktach.
+
+\subsection{Wnioski}
+
+\begin{enumerate}
+    \item Kwadratury Gaussa wykazują zbieżność wykładniczą (spektralną) dla funkcji gładkich. W związku z tym już po kilkunastu punktach wykres zanurkował do wartości mniejszych niż $10^{-15}$.
+    \item Ta różnica dobrze pokazuje przewagę kwadratur optymalnych w stosunku do siatek równomiernych. Aby osiągnąć ten sam wynik, metoda trapezów potrzebowała milionów ewaluacji, a Gauss-Legendre zaledwie siedemnastu.
+\end{enumerate}
+
+% ============================================================
+\section{Zadanie 3 \textendash{} Kwadratury adaptacyjne}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Polecenie wymaga ponownego obliczenia całki za pomocą algorytmów adaptacyjnych: adaptacyjnych trapezów oraz funkcji bibliotecznej \texttt{scipy.integrate.quad}, bazującej na adaptacyjnej metodzie Gaussa-Kronroda (QUADPACK). Celem jest zbadanie skuteczności tych metod zadanym tolerancjom błędu i naniesienie wyników na wspólny wykres.
+
+\subsection{Argumentacja rozwiązania}
+
+Kwadratury adaptacyjne mają za zadanie zagęszczać siatkę ewaluacji tylko w obszarach, gdzie funkcja charakteryzuje się dużą zmiennością (wysoka druga lub wyższa pochodna). Pozwala to na zoptymalizowanie czasu procesora i zminimalizowanie potrzebnych obliczeń w miejscach płaskich.
+
+Adaptacyjna kwadratura trapezów jest implementowana ręcznie poprzez stopniowe podwajanie gęstości, do momentu kiedy szacowany błąd pomiędzy starym a nowym krokiem będzie akceptowalny względem narzuconej tolerancji (od $1$ do $10^{-14}$). Do metody Gaussa-Kronroda wykorzystano dedykowaną funkcję ze zmienną \texttt{epsabs} równej ustalonej tolerancji.
+\begin{lstlisting}[caption={Wywołanie funkcji quad do Gaussa-Kronroda}]
+quad_out = integrate.quad(f, 0, 1, epsabs=tol, epsrel=tol, full_output=True)
+res_gk = np.float64(quad_out[0])
+n_evals_gk.append(quad_out[2]['neval'])
+\end{lstlisting}
+
+\subsection{Wyniki}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres3.png}
+  \caption{Osiągany błąd kwadratur adaptacyjnych względem liczby ewaluacji dla różnych tolerancji.}
+  \label{fig:adapt}
+\end{figure}
+
+Dla algorytmu \texttt{quad} (Gauss-Kronrod) do osiągnięcia dokładności rzędu błędu maszynowego wykorzystuje się tylko kilkadziesiąt ewaluacji funkcji. Wariant adaptacyjnych trapezów naturalnie staje się precyzyjniejszy dużo wolniej ze względu na niski rząd funkcji bazowej (trapezu).
+
+\subsection{Wnioski}
+
+\begin{enumerate}
+    \item Biblioteka \texttt{scipy.integrate.quad} doskonale optymalizuje obliczenia, ponieważ jest bardzo efektywna dla całek oznaczonych. Jest to hybryda zaawansowanych estymacji błędu Kronroda ze znakomitą zbieżnością węzłów Gaussa.
+    \item Algorytmy adaptacyjne są nieocenione w inżynierii, jeśli funkcja cechuje się punktowymi gwałtownymi wzrostami i zależy nam na oszczędzeniu mocy obliczeniowej.
+\end{enumerate}
+
+% ============================================================
+\section{Zadanie 4 \textendash{} Metoda Monte-Carlo}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Zadanie zakłada odnalezienie wartości całki numerycznej za pomocą losowych metod probabilistycznych Monte-Carlo. Rysowany jest wykres błędu względem bardzo dużej liczby generowanych próbek losowych $n$.
+
+\subsection{Argumentacja rozwiązania}
+
+Zgodnie z metodą wartości średniej Monte-Carlo, przybliżenie całki można wyrazić jako wartość oczekiwaną funkcji w podanym przedziale. Dla przedziału $[0,1]$ i dużej próby $N$, wartość ta zbiega wprost proporcjonalnie do średniej arytmetycznej.
+\[
+I \approx \frac{b-a}{N} \sum_{i=1}^{N} f(X_i)
+\]
+W bibliotece NumPy tablicę $N$ liczb losowych w przedziale $(0,1)$ wygenerowano, wykorzystując \texttt{np.random.uniform}.
+
+\subsection{Wyniki}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres4.png}
+  \caption{Zbieżność błędu całkowania metodą Monte-Carlo od liczby próbek $N$.}
+  \label{fig:mc}
+\end{figure}
+
+Metoda działa poprawnie i po pewnym czasie zbliża się do prawdziwej wartości $\pi$, czyli na przestrzeni kilkunastu milionów ewaluacji, błąd zmniejsza się w sposób liniowy w skali logarytmicznej.
+
+\subsection{Wnioski}
+
+\begin{enumerate}
+    \item Zbieżność metody Monte-Carlo jest bardzo niska i uzależniona jest ściśle od wartości pierwiastka kwadratowego liczby prób $\mathcal{O}(\frac{1}{\sqrt{N}})$. 
+    \item Na wykresie błędu doskonale widać lokalne duże losowe fluktuacje wywołane stochastycznym charakterem pobierania punktów. Gwarancja bliskości do celu wywodzi się jedynie z Centralnego Twierdzenia Granicznego.
+    \item Choć jest mało wydajna do prostych całek jednowymiarowych, staje się świetnym wyborem podczas rozwiązywania problemów całkowania po przestrzeniach wielowymiarowych o dużym skomplikowaniu (tzw. klątwa wymiarowości), w których standardowe siatki kwadratur musiałyby uwzględnić wręcz ogromną liczbę operacji.
+\end{enumerate}
+
+% ============================================================
+\section{Podsumowanie całościowe}
+% ============================================================
+
+\subsection{Porównanie wszystkich badanych metod}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wykres5.png}
+  \caption{Zestawienie błędu względnego wszystkich analizowanych metod całkowania w zależności od liczby ewaluacji.}
+  \label{fig:porownanie}
+\end{figure}
+
+Powyższy wykres zbiorczy doskonale ukazuje różnice w szybkości zbieżności poszczególnych algorytmów numerycznych w jednym ujęciu. Zestawienie to dobrze obrazuje różnicę pomiędzy podstawowymi metodami opartymi na równomiernej siatce a zaawansowanymi technikami optymalnymi.
+
+Można zauważyć, że kwadratura Gaussa-Legendre'a oraz adaptacyjna metoda Gaussa-Kronroda (\texttt{quad}) niemal natychmiastowo zbiegają do poziomu szumu maszynowego. Złożone metody Newtona-Cotesa również osiągają dobre rezultaty i ostatecznie zderzają się z błędem zmiennoprzecinkowym, jednakże potrzebują do tego znacznie więcej ewaluacji badanej funkcji. Z kolei krzywa błędu metody Monte-Carlo, ze względu na bardzo powolny proces zbiegania probabilistycznego, znajduje się znacznie wyżej na wykresie i maleje z ledwie zauważalnym nachyleniem, co pokazuje, że jest ona mało wydajna w przypadku łatwych całek jednowymiarowych.
+
+\subsection{Główne wnioski}
+
+\begin{enumerate}
+    \item \textbf{Cena metody Newtona-Cotesa.} Podstawowe metody jak prostokąty czy trapezy opierają się na gęstej, stałej siatce. Dla wymagających problemów natrafimy w nich na ścianę w postaci błędu numerycznego obliczeń float, która zatrzyma zbieżność przy pewnej wartości $h_{min}$.
+    \item \textbf{Przewaga Gaussa.} Kwadratura Gaussa-Legendre'a daje znacznie lepsze wyniki niż klasyczne rozwiązania w całkach jednowymiarowych z funkcji gładkich pod kątem rzędu zbieżności i czasu obliczeń. Pozbywa się problemu narzucanych węzłów wybierając optymalne dla przybliżeń wielomianowych.
+    \item \textbf{Zastosowanie.} Dobór odpowiedniego narzędzia zależy od dziedziny całkowania i specyfiki funkcji. \texttt{SciPy} oferuje rozwiązanie idealne dla większości uniwersalnych gładkich całek za pomocą adaptacyjnego QUADPACK (\texttt{quad}), optymalizując lokalnie rozmieszczenie kroków.
+\end{enumerate}
+
+\end{document}
