@@ -1,0 +1,351 @@
+\documentclass[12pt, a4paper]{article}
+
+% Pakiety
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% Zakaz dzielenia wyrazów
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% Zmiana nazwy float figure: Rysunek -> Wykres
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% Styl listingów
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b,
+  showstringspaces=false,
+  columns=flexible,
+  keepspaces=true,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'{o}}}1
+            {ś}{{\'{s}}}1 {ł}{{\l{}}}1 {ź}{{\'{z}}}1
+            {ż}{{\.z}}1 {ć}{{\'{c}}}1 {ń}{{\'{n}}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'{O}}}1
+            {Ś}{{\'{S}}}1 {Ł}{{L}}1,
+}
+
+% Strona tytułowa
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 7 \textendash{} Kwadratury, część II
+}
+\author{Mateusz Stoch}
+\date{28 kwietnia 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1 \textendash{} Prędkość strzały z łuku}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Dane są wartości siły naciągu $F$ łuku w funkcji długości naciągu $x$:
+
+\begin{center}
+\begin{tabular}{r|rrrrrrrrrrr}
+\toprule
+$x$ [m] & 0.00 & 0.05 & 0.10 & 0.15 & 0.20 & 0.25 & 0.30 & 0.35 & 0.40 & 0.45 & 0.50 \\
+\midrule
+$F$ [N]  & 0    & 37   & 71   & 104  & 134  & 161  & 185  & 207  & 225  & 239  & 250  \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Łuk jest naciągnięty na odległość $L = 0{,}5\,\text{m}$, a masa strzały wynosi $m = 0{,}075\,\text{kg}$. Energia kinetyczna strzały w chwili wypuszczenia równa się pracy włożonej w naciągnięcie łuku:
+
+\[
+  \frac{1}{2}mv^2 = \int_0^L F\,dx
+\]
+
+\subsection{Argumentacja rozwiązania}
+
+Dane są podane w postaci dyskretnych punktów pomiarowych, a nie analitycznej funkcji, dlatego całkę wyznaczono metodą Simpsona z biblioteki SciPy (\texttt{scipy.integrate.simpson}). Metoda Simpsona przy równoodległych węzłach jest odpowiednim wyborem, ponieważ minimalizuje błąd przy stosunkowo niewielu punktach pomiarowych.
+
+\begin{lstlisting}[caption={Obliczenie pracy i prędkości strzały}]
+x_data = np.array([0.00, 0.05, 0.10, ..., 0.50])
+F_data = np.array([0, 37, 71, ..., 250])
+
+W_simpson = np.float64(integrate.simpson(F_data, x=x_data))
+v_simpson = np.sqrt(np.float64(2.0) * W_simpson / m)
+\end{lstlisting}
+
+\subsection{Wyniki}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres1.png}
+  \caption{Siła naciągu łuku w zależności od długości naciągu. Zacieniowany obszar odpowiada pracy $W$.}
+  \label{fig:luk}
+\end{figure}
+
+Obliczone wartości:
+\begin{itemize}
+  \item Praca: $W = 74{,}5333\,\text{J}$
+  \item Prędkość strzały: $v = 44{,}5820\,\text{m/s} \approx 160\,\text{km/h}$
+\end{itemize}
+
+\subsection{Wnioski}
+
+Metoda Simpsona dobrze nadaje się do całkowania danych dyskretnych. 
+% ============================================================
+\section{Zadanie 2 \textendash{} Ciało na sprężynie z tarciem}
+% ============================================================
+
+\subsection{Część (a): Prędkość $v_0$ w punkcie $x = 0$}
+
+\subsubsection{Opis zadania}
+
+Ciało o masie $m = 0{,}8\,\text{kg}$ jest przymocowane do sprężyny o stałej sprężystości $k = 80\,\text{N/m}$ i długości swobodnej $l = 0{,}4\,\text{m}$. Współczynnik tarcia między ciałem a poziomym prętem wynosi $\mu = 0{,}3$. Przyspieszenie ciała jest równe $\ddot{x} = -f(x)$, gdzie:
+\[
+  f(x) = \mu g + \frac{k}{m}\left(\mu l + x\right)\left(1 - \frac{l}{\sqrt{l^2 + x^2}}\right)
+\]
+
+Prędkość ciała w punkcie $x = 0$, gdy zaczyna ono ruch od $x = l$, wyraża się wzorem:
+\[
+  v_0 = \sqrt{2\int_0^l f(x)\,dx}
+\]
+
+\subsubsection{Argumentacja rozwiązania}
+
+Funkcja podcałkowa $f(x)$ jest gładka na przedziale $[0, l]$, więc można bezpośrednio zastosować adaptacyjną kwadraturę Gaussa-Kronroda (\texttt{scipy.integrate.quad}).
+
+\begin{lstlisting}[caption={Obliczenie prędkości v0}]
+def f2(x):
+    return mu*g + (k/m2)*(mu*l2 + x)*(1.0 - l2/np.sqrt(l2**2 + x**2))
+
+W2, err2 = integrate.quad(f2, 0.0, float(l2))
+v0 = np.sqrt(2.0 * W2)
+\end{lstlisting}
+
+\subsubsection{Wyniki}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres2.png}
+  \caption{Funkcja przyspieszenia $f(x)$ na przedziale $[0, l]$.}
+  \label{fig:sprezyna_a}
+\end{figure}
+
+\begin{itemize}
+  \item Całka: $\int_0^l f(x)\,dx = 3{,}119190$
+  \item Szacowany błąd: $3{,}46 \times 10^{-14}$
+  \item Prędkość: $v_0 = 2{,}497675\,\text{m/s}$
+\end{itemize}
+
+\subsection{Część (b): Stała C i czas $t$}
+
+\subsubsection{Opis zadania}
+
+Czas potrzebny na przebycie drogi od $x = l$ do $x = 0$ wynosi $t = C\sqrt{m/k}$, gdzie:
+\[
+  C = \int_0^1 \left[(\sqrt{2}-1)^2 - (\sqrt{1+z}-1)^2\right]^{-1/2} dz
+\]
+
+Funkcja podcałkowa ma osobliwość w punkcie $z = 1$, która zachowuje się jak $(1-z)^{-1/2}$.
+
+\subsubsection{Argumentacja rozwiązania}
+
+Aby poradzić sobie z osobliwością, zastosowano następujące podejście:
+\begin{enumerate}
+  \item Bezpośrednie wywołanie \texttt{integrate.quad} z parametrem \texttt{points=[0.99]} -- wymuszenie podziału siatki w pobliżu osobliwości.
+\end{enumerate}
+
+\begin{lstlisting}[caption={Obliczenie stałej C z obsługą osobliwości}]
+def integrand_C(z):
+    A = (np.sqrt(2.0) - 1.0)**2
+    B = (np.sqrt(1.0 + z) - 1.0)**2
+    val = np.where(A - B <= 0.0, 1e-30, A - B)
+    return 1.0 / np.sqrt(val)
+
+C_val, err_C = integrate.quad(
+    integrand_C, 0.0, 1.0,
+    limit=200, points=[0.99],
+    epsabs=1e-10, epsrel=1e-10
+)
+t_val = C_val * np.sqrt(m2 / k)
+\end{lstlisting}
+
+\subsubsection{Wyniki}
+
+\begin{itemize}
+  \item Stała $C = 3{,}970020$
+  \item Szacowany błąd: $1{,}24 \times 10^{-10}$
+  \item Czas: $t = C\sqrt{m/k} = 3{,}970020 \cdot 0{,}100000 = 0{,}397002\,\text{s}$
+\end{itemize}
+
+\subsection{Wnioski}
+
+Zadanie 2 pokazuje dwa typowe problemy praktyczne przy numerycznym całkowaniu:
+\begin{itemize}
+  \item W części (a) funkcja jest gładka, co sprawia, że adaptacyjna kwadratura Gaussa-Kronroda daje wynik niemal natychmiastowo z precyzją rzędu błędu maszynowego.
+  \item W części (b) istnieje osobliwość w końcowym punkcie przedziału, która wymaga specjalnego traktowania. Poinformowanie algorytmu o lokalizacji osobliwości (parametr \texttt{points}).
+\end{itemize}
+
+% ============================================================
+\section{Zadanie 3 \textendash{} Wahadło matematyczne}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Dane jest wahadło matematyczne o długości $l = 1\,\text{m}$ i wychyleniu początkowym $\theta_0$. Dla małych wychyleń okres jest przybliżany wzorem:
+\[
+  T_0 = 2\pi\sqrt{\frac{l}{g}}
+\]
+
+Dla dowolnych wychyleń dokładny okres wyraża się przez całkę eliptyczną pierwszego rodzaju $K(k)$:
+\[
+  T(\theta_0) = 4\sqrt{\frac{l}{g}}\,K(k), \qquad K(k) = \int_0^{\pi/2}\frac{d\theta}{\sqrt{1 - k^2\sin^2\theta}}, \qquad k = \sin\frac{\theta_0}{2}
+\]
+
+\subsection{Część (a): Całka eliptyczna kwadraturą}
+
+\subsubsection{Argumentacja rozwiązania}
+
+Całkę eliptyczną wyznaczono przy użyciu \texttt{scipy.integrate.quad} z funkcją podcałkową $\frac{1}{\sqrt{1-k^2\sin^2\theta}}$ na przedziale $[0, \pi/2]$. Jako wartość referencyjną przyjęto wartość zwracaną przez funkcję \texttt{scipy.special.ellipk}.
+
+\begin{lstlisting}[caption={Obliczenie całki eliptycznej kwadraturą}]
+k_mod = np.sin(theta0 / 2.0)
+K_true = np.float64(special.ellipk(k_mod**2))
+
+def elliptic_integrand(theta, k):
+    return 1.0 / np.sqrt(1.0 - k**2 * np.sin(theta)**2)
+
+K_quad, err_K = integrate.quad(
+    elliptic_integrand, 0.0, np.pi/2, args=(float(k_mod),)
+)
+T_true_quad = 4.0 * np.sqrt(l3 / g3) * K_quad
+\end{lstlisting}
+
+\subsubsection{Wyniki}
+
+Dla $\theta_0 = 45^{\circ}$:
+\begin{itemize}
+  \item Moduł: $k = \sin(22{,}5^{\circ}) \approx 0{,}38268343$
+  \item $K(k)$ z \texttt{scipy.special.ellipk}: $1{,}63358631$
+  \item $K(k)$ kwadratura: $1{,}63358631$
+  \item Błąd względny (kwadratura vs scipy): $1{,}36 \times 10^{-16}$
+  \item Dokładny okres: $T(\theta_0 = 45^{\circ}) = 2{,}086256\,\text{s}$
+  \item Przybliżony okres (małe drgania): $T_0 = 2{,}006067\,\text{s}$
+\end{itemize}
+
+\subsection{Część (b): Całka eliptyczna przez AGM}
+
+\subsubsection{Opis zadania}
+
+Istnieje wzór na całkę eliptyczną przez średnią arytmetyczno-geometryczną (AGM):
+\[
+  K(k) = \frac{\pi}{2} \cdot \frac{1}{\mathrm{AGM}(1+k,\, 1-k)}
+\]
+
+Ciągi $a_n$, $b_n$ definiujące AGM spełniają rekurencję:
+\[
+  a_0 = 1+k, \quad b_0 = 1-k, \qquad a_{n+1} = \frac{a_n+b_n}{2}, \quad b_{n+1} = \sqrt{a_n b_n}
+\]
+
+\subsubsection{Argumentacja rozwiązania}
+
+AGM zbiega kwadratowo, więc kilka iteracji wystarczy, by osiągnąć precyzję maszynową. Zbieżność jest jeszcze szybsza niż wykładnicza.
+
+\begin{lstlisting}[caption={Obliczenie K(k) przez AGM}]
+def agm_K(k_val, n_iter):
+    a = 1.0 + k_val
+    b = 1.0 - k_val
+    for _ in range(n_iter):
+        a_new = (a + b) / 2.0
+        b_new = np.sqrt(a * b)
+        a, b = a_new, b_new
+    return (np.pi / 2.0) / a
+\end{lstlisting}
+
+\subsubsection{Wyniki}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres3.png}
+  \caption{Błąd względny przybliżenia $K(k)$ przez AGM w zależności od liczby iteracji ($\theta_0 = 45^{\circ}$).}
+  \label{fig:agm}
+\end{figure}
+
+Po 20 iteracjach:
+\begin{itemize}
+  \item $K(k)_\mathrm{AGM} = 1{,}63358631$
+  \item Błąd względny AGM: $0{,}00 \times 10^{0}$ (poniżej progu precyzji maszynowej)
+  \item Okres AGM: $T = 2{,}086256\,\text{s}$
+\end{itemize}
+
+Z wykresu wynika, że AGM osiąga precyzję maszynową już po około 4--5 iteracjach.
+
+\subsection{Błąd przybliżenia małych drgań}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres4.png}
+  \caption{Błąd względny okresu $T_0$ (przybliżenie małych drgań) w zależności od amplitudy $\theta_0$.}
+  \label{fig:blad_t0}
+\end{figure}
+
+Wykres pokazuje, że błąd wzoru $T_0 = 2\pi\sqrt{l/g}$ rośnie gwałtownie wraz ze wzrostem kąta wychylenia. Dla małych kątów (do ok. $15^{\circ}$) błąd jest pomijalny, natomiast dla $\theta_0 = 90^{\circ}$ przekracza już kilkanaście procent.
+
+\subsection{Wnioski}
+
+\begin{enumerate}
+  \item Kwadratura adaptacyjna Gaussa-Kronroda (\texttt{quad}) wyznacza całkę eliptyczną z precyzją bliską granicy maszynowej.
+  \item Metoda AGM zbiega znacznie szybciej niż typowe kwadratury numeryczne, ponieważ jej zbieżność jest kwadratowa. W praktyce 5 iteracji wystarczy do osiągnięcia pełnej precyzji \texttt{float64}.
+  \item Przybliżenie okresu małych drgań $T_0$ jest wystarczająco dobre tylko dla kątów wychylenia nieprzekraczających kilkunastu stopni. Przy większych kątach należy korzystać ze wzoru dokładnego opartego na całce eliptycznej.
+\end{enumerate}
+
+% ============================================================
+\section{Podsumowanie}
+% ============================================================
+
+Laboratorium 7 skupiło się na zastosowaniach całkowania numerycznego do problemów fizycznych. Wykazano, że:
+\begin{itemize}
+  \item Do całkowania danych tabelarycznych (zadanie 1) wygodnie stosuje się prostą kwadraturę Simpsona.
+  \item Adaptacyjna kwadratura Gaussa-Kronroda (\texttt{scipy.integrate.quad}) radzi sobie znakomicie z gładkimi funkcjami i funkcjami z osobliwościami po wskazaniu ich lokalizacji (zadanie 2).
+  \item Dla specjalnych funkcji matematycznych (całka eliptyczna) istnieją efektywne algorytmy iteracyjne (AGM), które osiągają bardzo wysoką precyzję przy minimalnej liczbie obliczeń (zadanie 3).
+\end{itemize}
+
+\end{document}
