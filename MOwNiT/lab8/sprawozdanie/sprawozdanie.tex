@@ -1,0 +1,417 @@
+\documentclass[12pt, a4paper]{article}
+
+% Pakiety
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% Zakaz dzielenia wyrazów
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% Zmiana nazwy float figure: Rysunek -> Wykres
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% Styl listingów
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b,
+  showstringspaces=false,
+  columns=flexible,
+  keepspaces=true,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'{o}}}1
+            {ś}{{\'{s}}}1 {ł}{{\l{}}}1 {ź}{{\'{z}}}1
+            {ż}{{\.z}}1 {ć}{{\'{c}}}1 {ń}{{\'{n}}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'{O}}}1
+            {Ś}{{\'{S}}}1 {Ł}{{L}}1,
+}
+
+% Strona tytułowa
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 8 \textendash{} Rozwiązywanie równań nieliniowych
+}
+\author{Mateusz Stoch}
+\date{6 maja 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1 \textendash{} Schematy iteracyjne}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Dane jest równanie kwadratowe:
+\[
+  f(x) = x^2 - 3x + 2 = 0
+\]
+którego pierwiastki to $\alpha_1 = 1$ i $\alpha_2 = 2$. Badamy zbieżność do pierwiastka $\alpha = 2$ czterech równoważnych schematów iteracyjnych:
+
+\begin{align*}
+  \varphi_1(x) &= \frac{x^2 + 2}{3} \\
+  \varphi_2(x) &= \sqrt{3x - 2} \\
+  \varphi_3(x) &= 3 - \frac{2}{x} \\
+  \varphi_4(x) &= \frac{x^2 - 2}{2x - 3}
+\end{align*}
+
+\subsection{Analiza zbieżności}
+
+Warunkiem zbieżności iteracji $x_{k+1} = \varphi(x_k)$ do punktu stałego $\alpha$ jest $|\varphi'(\alpha)| < 1$. Obliczamy pochodne i sprawdzamy ich wartości w punkcie $\alpha = 2$:
+
+\begin{center}
+\begin{tabular}{l|c|c}
+\toprule
+Schemat & $|\varphi'(2)|$ & Zbieżny \\
+\midrule
+$\varphi_1 = (x^2+2)/3$ & $1{,}333333$ & NIE \\
+$\varphi_2 = \sqrt{3x-2}$ & $0{,}750000$ & TAK \\
+$\varphi_3 = 3 - 2/x$ & $0{,}500000$ & TAK \\
+$\varphi_4 = (x^2-2)/(2x-3)$ & $0{,}000000$ & TAK \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Wyniki eksperymentalne}
+
+Każdy schemat wykonano przez 10 iteracji, startując z $x_0 = 2{,}5$. Rząd zbieżności wyznaczono empirycznie ze wzoru:
+\[
+  r = \frac{\ln(\varepsilon_k / \varepsilon_{k+1})}{\ln(\varepsilon_{k-1} / \varepsilon_k)}, \quad \varepsilon_k = |x_k - \alpha|
+\]
+
+\begin{lstlisting}[caption={Implementacja schematów iteracyjnych}]
+alpha = np.float64(2.0)
+phi1 = lambda x: (x**2 + 2) / 3
+phi2 = lambda x: np.sqrt(3*x - 2) if 3*x - 2 >= 0 else float('nan')
+phi3 = lambda x: 3 - 2/x
+phi4 = lambda x: (x**2 - 2) / (2*x - 3)
+\end{lstlisting}
+
+Poniżej wybrane iteracje dla każdego schematu:
+
+\begin{center}
+\begin{tabular}{l|r|r}
+\toprule
+Schemat & $x_{10}$ & $\varepsilon_{10}$ \\
+\midrule
+$\varphi_1$ (rozbieżny) & \texttt{nan} & \texttt{nan} \\
+$\varphi_2$ & $2{,}0210522$ & $2{,}11 \times 10^{-2}$ \\
+$\varphi_3$ & $2{,}0003256$ & $3{,}26 \times 10^{-4}$ \\
+$\varphi_4$ & $2{,}0000000$ & $0{,}00 \times 10^{0}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Wyznaczone empiryczne rzędy zbieżności:
+\begin{itemize}
+  \item $\varphi_2$: $r \approx 0{,}992$ (zbieżność liniowa)
+  \item $\varphi_3$: $r \approx 0{,}999$ (zbieżność liniowa)
+  \item $\varphi_4$: $r \approx 1{,}856$ (zbieżność bliżej kwadratowej)
+\end{itemize}
+
+Uwaga: $\varphi_1$ jest rozbieżny, więc wyznaczenie rzędu zbieżności nie ma sensu.
+
+\subsection{Wykresy błędów}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres1.png}
+  \caption{Błąd względny $|\varepsilon_k|$ w skali logarytmicznej. Lewy panel: wszystkie metody (widać rozbieżność $\varphi_1$). Prawy panel: tylko metody zbieżne.}
+  \label{fig:bledy_z1}
+\end{figure}
+
+\subsection{Wnioski}
+
+Schemat $\varphi_1$ rozbieżny, bo $|\varphi_1'(2)| = 4/3 > 1$. Schematy $\varphi_2$ i $\varphi_3$ zbiegają liniowo, ponieważ ich pochodne w punkcie stałym są w przedziale $(0, 1)$. Schemat $\varphi_4$ zbiega szybko i odpowiada metodzie Newtona zastosowanej do $f(x)$, stąd jego zbieżność kwadratowa.
+
+% ============================================================
+\section{Zadanie 2 \textendash{} Metoda Newtona \textendash{} przypadki problematyczne}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Metoda Newtona dla $f(x)$ wyznacza kolejne przybliżenia ze wzoru:
+\[
+  x_{k+1} = x_k - \frac{f(x_k)}{f'(x_k)}
+\]
+
+Sprawdzamy cztery funkcje, dla których metoda Newtona zawodzi przy podanych punktach startowych. Następnie szukamy skutecznych rozwiązań.
+
+\subsection{Przypadek (a): $f(x) = x^3 - 5x$, $x_0 = 1$}
+
+\textbf{Dlaczego zawodzi:} W punkcie $x_0 = 1$ mamy $f'(1) = 3 \cdot 1 - 5 = -2$. Newton wyznacza $x_1 = 1 - (-4)/(-2) = 1 - 2 = -1$, następnie $x_2 = 1$, i tak dalej. Algorytm wpada w cykl i nie zbiega.
+
+\textbf{Rozwiązanie:} Zmiana punktu startowego na $x_0 = 2{,}5$ daje pierwiastek $\sqrt{5} \approx 2{,}23606798$.
+
+\subsection{Przypadek (b): $f(x) = x^3 - 3x + 1$, $x_0 = 1$}
+
+\textbf{Dlaczego zawodzi:} Pochodna $f'(1) = 3 \cdot 1 - 3 = 0$. Newton próbuje podzielić przez zero, co natychmiast kończy iteracje błędem.
+
+\textbf{Rozwiązanie:} Zmiana punktu startowego na $x_0 = 1{,}5$ daje pierwiastek $\approx 1{,}53208889$.
+
+\subsection{Przypadek (c): $f(x) = 2 - x^5$, $x_0 = 0{,}01$}
+
+\textbf{Dlaczego zawodzi:} Pochodna $f'(0{,}01) = -5 \cdot (0{,}01)^4$ jest bardzo mała, co powoduje skok Newtona w odległe miejsce. Iteracja nie wraca w okolice pierwiastka.
+
+\textbf{Rozwiązanie:} Zmiana punktu startowego na $x_0 = 1{,}0$ daje pierwiastek $2^{1/5} \approx 1{,}14869835$.
+
+\subsection{Przypadek (d): $f(x) = x^4 - 4{,}29x^2 - 5{,}29$, $x_0 = 0{,}8$}
+
+\textbf{Dlaczego zawodzi:} Z punktu $x_0 = 0{,}8$ metoda Newtona oscyluje między wartościami, nie zbiegając do żadnego pierwiastka.
+
+\textbf{Rozwiązanie:} Zmiana punktu startowego na $x_0 = 2{,}3$ daje pierwiastek $\approx 2{,}30000000$.
+
+\begin{lstlisting}[caption={Przykładowe naprawione wywołanie dla przypadku (a)}]
+f_a  = lambda x: x**3 - 5*x
+fp_a = lambda x: 3*x**2 - 5
+root_a = optimize.newton(f_a, 2.5, fprime=fp_a)
+# wynik: sqrt(5) = 2.23606798
+\end{lstlisting}
+
+\subsection{Wnioski}
+
+Metoda Newtona może zawodzić z kilku powodów: zerowa pochodna w punkcie startowym, wpadanie w cykl, lub zbyt mała pochodna powodująca duże skoki. We wszystkich przypadkach wystarczyła zmiana punktu startowego lub, alternatywnie, użycie metody \texttt{scipy.optimize.brentq} jako odporniejszej na takie sytuacje.
+
+% ============================================================
+\section{Zadanie 3 \textendash{} Schematy Newtona bez dzielenia}
+% ============================================================
+
+\subsection{Część (a): Obliczanie $x = 1/c$}
+
+\textbf{Wyprowadzenie:} Szukamy $x = 1/c$, czyli pierwiastka funkcji $f(x) = \frac{1}{x} - c$. Jej pochodna to $f'(x) = -\frac{1}{x^2}$. Krok Newtona daje:
+\[
+  x_{k+1} = x_k - \frac{f(x_k)}{f'(x_k)} = x_k - \frac{\frac{1}{x_k} - c}{-\frac{1}{x_k^2}} = x_k + x_k^2\left(\frac{1}{x_k} - c\right) = 2x_k - cx_k^2
+\]
+
+\textbf{Schemat iteracji:}
+\[
+  x_{k+1} = x_k(2 - cx_k) \quad \text{[tylko dodawanie i mnożenie]}
+\]
+
+\textbf{Wyniki dla $c = 3$, $x_0 = 0{,}3$:}
+
+\begin{center}
+\begin{tabular}{r|r|r}
+\toprule
+$k$ & $x_k$ & $\varepsilon_k$ \\
+\midrule
+1 & $0{,}3300000000$ & $3{,}33 \times 10^{-3}$ \\
+2 & $0{,}3333000000$ & $3{,}33 \times 10^{-5}$ \\
+3 & $0{,}3333333300$ & $3{,}33 \times 10^{-9}$ \\
+4 & $0{,}3333333333$ & $5{,}55 \times 10^{-17}$ \\
+5+ & $0{,}3333333333$ & $0{,}00 \times 10^{0}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Po 4 iteracjach osiągamy pełną precyzję \texttt{float64}.
+
+\subsection{Część (b): Obliczanie $x = 1/\sqrt{c}$}
+
+\textbf{Wyprowadzenie:} Szukamy $x = 1/\sqrt{c}$, czyli pierwiastka $f(x) = \frac{1}{x^2} - c$. Pochodna: $f'(x) = -\frac{2}{x^3}$. Krok Newtona:
+\[
+  x_{k+1} = x_k - \frac{\frac{1}{x_k^2} - c}{-\frac{2}{x_k^3}} = x_k + \frac{x_k}{2}\left(1 - cx_k^2\right) = \frac{x_k(3 - cx_k^2)}{2}
+\]
+
+\textbf{Schemat iteracji:}
+\[
+  x_{k+1} = \frac{x_k(3 - cx_k^2)}{2} \quad \text{[dodawanie, mnożenie, dzielenie przez 2]}
+\]
+
+\textbf{Wyniki dla $c = 4$, $x_0 = 0{,}45$:}
+
+\begin{center}
+\begin{tabular}{r|r|r}
+\toprule
+$k$ & $x_k$ & $\varepsilon_k$ \\
+\midrule
+1 & $0{,}4927500000$ & $7{,}25 \times 10^{-3}$ \\
+2 & $0{,}4998430747$ & $1{,}57 \times 10^{-4}$ \\
+3 & $0{,}4999999261$ & $7{,}39 \times 10^{-8}$ \\
+4 & $0{,}5000000000$ & $1{,}64 \times 10^{-14}$ \\
+5+ & $0{,}5000000000$ & $0{,}00 \times 10^{0}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Część (c): Schemat Herona dla $x = \sqrt{c}$}
+
+\textbf{Wyprowadzenie:} Szukamy $x = \sqrt{c}$, czyli pierwiastka $f(x) = x^2 - c$. Pochodna: $f'(x) = 2x$. Krok Newtona:
+\[
+  x_{k+1} = x_k - \frac{x_k^2 - c}{2x_k} = \frac{x_k + c/x_k}{2} \quad \text{[schemat Herona]}
+\]
+
+\textbf{Wada:} schemat wymaga dzielenia przez $x_k$, a nie tylko przez 2. Jeśli $x_k \approx 0$, mamy problem numeryczny, a poza tym instrukcja ogólnego dzielenia jest kosztowna na wielu procesorach.
+
+\textbf{Wyniki dla $c = 2$, $x_0 = 1{,}5$:}
+
+\begin{center}
+\begin{tabular}{r|r|r}
+\toprule
+$k$ & $x_k$ & $\varepsilon_k$ \\
+\midrule
+1 & $1{,}4166666667$ & $2{,}45 \times 10^{-3}$ \\
+2 & $1{,}4142156863$ & $2{,}12 \times 10^{-6}$ \\
+3 & $1{,}4142135624$ & $1{,}59 \times 10^{-12}$ \\
+4+ & $1{,}4142135624$ & $\leq 2{,}22 \times 10^{-16}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Część (d): Alternatywa dla Herona}
+
+Zamiast bezpośrednio obliczać $\sqrt{c}$ schematem Herona, używamy schematu z części (b) do wyznaczenia $y = 1/\sqrt{c}$, a następnie $\sqrt{c} = c \cdot y$. Całe obliczenie wymaga tylko dodawania, mnożenia i dzielenia przez 2.
+
+\textbf{Schemat:}
+\[
+  y_{k+1} = \frac{y_k(3 - cy_k^2)}{2}, \quad \text{następnie } \sqrt{c} = c \cdot y
+\]
+
+\textbf{Wyniki dla $c = 2$, $y_0 = 0{,}68$:}
+
+\begin{center}
+\begin{tabular}{r|r|r|r}
+\toprule
+$k$ & $1/\sqrt{c}$ & $\sqrt{c}$ & $\varepsilon_k$ \\
+\midrule
+1 & $0{,}7055680000$ & $1{,}4111360000$ & $3{,}08 \times 10^{-3}$ \\
+2 & $0{,}7071017619$ & $1{,}4142035237$ & $1{,}00 \times 10^{-5}$ \\
+3 & $0{,}7071067811$ & $1{,}4142135623$ & $1{,}07 \times 10^{-10}$ \\
+4+ & $0{,}7071067812$ & $1{,}4142135624$ & $\leq 2{,}22 \times 10^{-16}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Wnioski}
+
+Wszystkie schematy iteracyjne wywodzą się bezpośrednio z metody Newtona. Kluczową obserwacją jest to, że dobierając odpowiednią funkcję $f(x)$ można tak skonstruować schemat, by unikał on kosztownych operacji arytmetycznych. Schemat Herona, choć elegancki, wymaga ogólnego dzielenia, natomiast alternatywa z podpunktu (d) unika tego problemu, zachowując tę samą szybkość zbieżności (kwadratową).
+
+% ============================================================
+\section{Zadanie 4 \textendash{} Układ równań nieliniowych metodą Newtona}
+% ============================================================
+
+\subsection{Opis zadania}
+
+Rozważamy układ równań nieliniowych:
+\[
+  \begin{cases}
+    x_1^2 + x_2^2 = 1 \\
+    x_1^2 - x_2 = 0
+  \end{cases}
+\]
+
+Dokładne rozwiązanie to:
+\[
+  x_1 = \sqrt{\frac{\sqrt{5}}{2} - \frac{1}{2}} \approx 0{,}7861513778, \qquad
+  x_2 = \frac{\sqrt{5}}{2} - \frac{1}{2} \approx 0{,}6180339887
+\]
+
+\subsection{Schemat iteracji Newtona}
+
+Dla układu $\mathbf{F}(\mathbf{x}) = \mathbf{0}$ każdy krok Newtona wyznaczamy rozwiązując układ liniowy:
+\[
+  J(\mathbf{x}_k)\, \mathbf{s}_{k} = -\mathbf{F}(\mathbf{x}_k), \qquad \mathbf{x}_{k+1} = \mathbf{x}_k + \mathbf{s}_{k}
+\]
+gdzie $J$ to jakobian układu:
+\[
+  J = \begin{pmatrix} 2x_1 & 2x_2 \\ 2x_1 & -1 \end{pmatrix}
+\]
+
+\begin{lstlisting}[caption={Implementacja metody Newtona dla układu równań}]
+def F(xy):
+    x1, x2 = xy[0], xy[1]
+    return np.array([x1**2 + x2**2 - 1.0, x1**2 - x2])
+
+def J(xy):
+    x1, x2 = xy[0], xy[1]
+    return np.array([[2.0*x1, 2.0*x2], [2.0*x1, -1.0]])
+
+xy = np.array([1.0, 0.5])
+for k in range(10):
+    delta = np.linalg.solve(J(xy), -F(xy))
+    xy = xy + delta
+\end{lstlisting}
+
+\subsection{Wyniki}
+
+Iteracje startując z $\mathbf{x}_0 = (1{,}0,\; 0{,}5)$:
+
+\begin{center}
+\begin{tabular}{r|r|r|r}
+\toprule
+$k$ & $x_1$ & $x_2$ & $\|\mathbf{x}_k - \mathbf{x}^*\|$ \\
+\midrule
+0 & $1{,}0000000000$ & $0{,}5000000000$ & \textendash{} \\
+1 & $0{,}8125000000$ & $0{,}6250000000$ & $2{,}73 \times 10^{-2}$ \\
+2 & $0{,}7865918803$ & $0{,}6180555556$ & $4{,}41 \times 10^{-4}$ \\
+3 & $0{,}7861515012$ & $0{,}6180339890$ & $1{,}23 \times 10^{-7}$ \\
+4 & $0{,}7861513778$ & $0{,}6180339887$ & $9{,}66 \times 10^{-15}$ \\
+5+ & $0{,}7861513778$ & $0{,}6180339887$ & $\leq 1{,}11 \times 10^{-16}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Błąd względny wyznaczonego rozwiązania:
+\begin{itemize}
+  \item $x_1$: błąd względny $= 0{,}00 \times 10^{0}$
+  \item $x_2$: błąd względny $= 1{,}80 \times 10^{-16}$
+\end{itemize}
+
+\subsection{Wnioski}
+
+Metoda Newtona dla układów równań zbiega tak samo szybko jak w przypadku skalarnym, czyli kwadratowo. Już po 4 iteracjach błąd spada poniżej progu precyzji maszynowej. Kluczowe jest oczywiście to, że jakobian musi być nieosobliwy w każdym kroku iteracji, a punkt startowy powinien leżeć wystarczająco blisko rozwiązania.
+
+% ============================================================
+\section{Podsumowanie}
+% ============================================================
+
+Laboratorium 8 dotyczyło numerycznych metod rozwiązywania równań nieliniowych. Najważniejsze wnioski:
+
+\begin{itemize}
+  \item Zbieżność iteracji punktu stałego zależy bezpośrednio od wartości $|\varphi'(\alpha)|$: jeśli jest mniejsza od 1, metoda zbiega, w przeciwnym razie rozbieżnie. Schemat odpowiadający metodzie Newtona ($\varphi'(\alpha) = 0$) zbiega kwadratowo.
+  \item Metoda Newtona może zawodzić przy nieudanym wyborze punktu startowego (zerowa pochodna, cykl, duży skok). Odpowiedni dobór $x_0$ lub przejście na odporniejszą metodę (np. \texttt{brentq}) rozwiązuje problem.
+  \item Sprytny dobór funkcji $f(x)$ w metodzie Newtona pozwala wyeliminować kosztowne operacje arytmetyczne z schematu iteracyjnego, zachowując szybką zbieżność kwadratową.
+  \item Rozszerzenie metody Newtona na układy równań wymaga obliczania i odwracania jakobianu, ale zachowuje zbieżność kwadratową.
+\end{itemize}
+
+\end{document}
