@@ -49,7 +49,8 @@ static void broadcast(int sender_id, const char *text) {
     memset(&out, 0, sizeof(out));
     out.mtype     = MSG_CHAT;
     out.client_id = sender_id;
-    snprintf(out.text, sizeof(out.text), "[klient %d]: %s", sender_id, text);
+    snprintf(out.text, sizeof(out.text), "[klient %d]: %.*s", 
+             sender_id, (int)(sizeof(out.text) - 32), text);
 
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (!clients[i].active)
@@ -128,8 +129,7 @@ int main(void) {
             /* Zapisz klienta w tablicy */
             clients[id].active = 1;
             clients[id].queue  = cq;
-            strncpy(clients[id].queue_name, msg.client_queue,
-                    sizeof(clients[id].queue_name) - 1);
+            snprintf(clients[id].queue_name, sizeof(clients[id].queue_name), "%s", msg.client_queue);
             client_count++;
 
             printf("[serwer] Nowy klient! ID=%d, kolejka=%s\n",

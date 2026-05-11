@@ -93,8 +93,7 @@ int main(void) {
     memset(&init_msg, 0, sizeof(init_msg));
     init_msg.mtype     = MSG_INIT;
     init_msg.client_id = 0;    /* jeszcze nie mamy ID */
-    strncpy(init_msg.client_queue, my_queue_name,
-            sizeof(init_msg.client_queue) - 1);
+    snprintf(init_msg.client_queue, sizeof(init_msg.client_queue), "%s", my_queue_name);
 
     if (mq_send(server_mq, (char *)&init_msg, sizeof(init_msg), 0) == -1) {
         perror("[klient] mq_send INIT");
@@ -158,7 +157,7 @@ int main(void) {
         memset(&out, 0, sizeof(out));
         out.mtype     = MSG_CHAT;
         out.client_id = my_id;
-        strncpy(out.text, line, sizeof(out.text) - 1);
+        snprintf(out.text, sizeof(out.text), "%s", line);
 
         if (mq_send(server_mq, (char *)&out, sizeof(out), 0) == -1) {
             perror("[klient] mq_send wiadomość");
