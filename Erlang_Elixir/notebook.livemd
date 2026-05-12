@@ -1,0 +1,51 @@
+<!-- livebook:{"file_entries":[{"file":{"file_system_id":"local","file_system_type":"local","path":"/Users/mateuszstoch/Downloads/AirlyData-ALL-50k.csv"},"name":"AirlyData-ALL-50k.csv","type":"file"}]} -->
+
+# Pollution
+
+```elixir
+Code.append_path("/Users/mateuszstoch/Documents/AGH/Erlang_Elixir/lab4/pollution/_build/default/lib/pollution/ebin")
+
+Application.start(:pollution)
+
+:observer.start()
+```
+
+## Section
+
+```elixir
+defmodule Reading do
+  def convert_line(""), do: :ok
+  def convert_line(line) do
+    [dateTime,type,value,stationId,stationName,loc] = String.split(line,";")
+    [lat,lot] = String.split(loc,",") |> Enum.map(fn x-> String.to_float(x) end)
+    %{
+      :datetime => dateTime |> NaiveDateTime.from_iso8601!() |> NaiveDateTime.to_erl(),
+      :location => {lat,lot},
+      :stationId => String.to_integer(stationId),
+      :stationName => stationName,
+      :pollutionType => type,
+      :pollutionlevel => String.to_float(value)
+    }
+  end
+  def identify_stations(readings) do
+    Enum.uniq_by(readings, fn x -> x.stationId end)
+  end
+end
+```
+
+```elixir
+File.read!("/Users/mateuszstoch/Downloads/AirlyData-ALL-50k.csv") 
+|> String.trim()
+|> String.split("\n")
+|> Enum.map(& Reading.convert_line(&1))
+#|> Reading.identify_stations()
+#|> Enum.map(& :pollution_gen_server.add_station(&1.stationName,&1.location))
+|> Enum.map(& :pollution_gen_server.add_value({:name,&1.stationName},&1.datetime,&1.pollutionType,&1.pollutionlevel))
+
+
+
+
+
+```
+
+<!-- livebook:{"offset":1460,"stamp":{"token":"XCP.rkAh_v6GzwiUFxPW5g1WGz0twaaxjufWV3eoPevS5NEMtDSj2BA4iAyvDT04G4eyH3isomIVkBLF8NI0FpnI8bru7E81wYfDjPTp2g","version":2}} -->
