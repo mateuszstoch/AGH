@@ -179,25 +179,25 @@ Sprawdzamy cztery funkcje, dla których metoda Newtona zawodzi przy podanych pun
 
 \subsection{Przypadek (a): $f(x) = x^3 - 5x$, $x_0 = 1$}
 
-\textbf{Dlaczego zawodzi:} W punkcie $x_0 = 1$ mamy $f'(1) = 3 \cdot 1 - 5 = -2$. Newton wyznacza $x_1 = 1 - (-4)/(-2) = 1 - 2 = -1$, następnie $x_2 = 1$, i tak dalej. Algorytm wpada w cykl i nie zbiega.
+W punkcie $x_0 = 1$ mamy $f'(1) = 3 \cdot 1 - 5 = -2$. Newton wyznacza $x_1 = 1 - (-4)/(-2) = 1 - 2 = -1$, następnie $x_2 = 1$, i tak dalej. Algorytm wpada w cykl i nie zbiega.
 
 \textbf{Rozwiązanie:} Zmiana punktu startowego na $x_0 = 2{,}5$ daje pierwiastek $\sqrt{5} \approx 2{,}23606798$.
 
 \subsection{Przypadek (b): $f(x) = x^3 - 3x + 1$, $x_0 = 1$}
 
-\textbf{Dlaczego zawodzi:} Pochodna $f'(1) = 3 \cdot 1 - 3 = 0$. Newton próbuje podzielić przez zero, co natychmiast kończy iteracje błędem.
+ Pochodna $f'(1) = 3 \cdot 1 - 3 = 0$. Newton próbuje podzielić przez zero, co natychmiast kończy iteracje błędem.
 
 \textbf{Rozwiązanie:} Zmiana punktu startowego na $x_0 = 1{,}5$ daje pierwiastek $\approx 1{,}53208889$.
 
 \subsection{Przypadek (c): $f(x) = 2 - x^5$, $x_0 = 0{,}01$}
 
-\textbf{Dlaczego zawodzi:} Pochodna $f'(0{,}01) = -5 \cdot (0{,}01)^4$ jest bardzo mała, co powoduje skok Newtona w odległe miejsce. Iteracja nie wraca w okolice pierwiastka.
+ Pochodna $f'(0{,}01) = -5 \cdot (0{,}01)^4$ jest bardzo mała, co powoduje skok Newtona w odległe miejsce. Iteracja nie wraca w okolice pierwiastka.
 
 \textbf{Rozwiązanie:} Zmiana punktu startowego na $x_0 = 1{,}0$ daje pierwiastek $2^{1/5} \approx 1{,}14869835$.
 
 \subsection{Przypadek (d): $f(x) = x^4 - 4{,}29x^2 - 5{,}29$, $x_0 = 0{,}8$}
 
-\textbf{Dlaczego zawodzi:} Z punktu $x_0 = 0{,}8$ metoda Newtona oscyluje między wartościami, nie zbiegając do żadnego pierwiastka.
+ Z punktu $x_0 = 0{,}8$ metoda Newtona oscyluje między wartościami, nie zbiegając do żadnego pierwiastka.
 
 \textbf{Rozwiązanie:} Zmiana punktu startowego na $x_0 = 2{,}3$ daje pierwiastek $\approx 2{,}30000000$.
 
