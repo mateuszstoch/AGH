@@ -1,0 +1,349 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\geometry{margin=2.5cm}
+
+\newmdenv[backgroundcolor=gray!10, linecolor=gray!40, linewidth=1pt, innerleftmargin=10pt]{komentarz}
+
+\title{Lab 9 -- Równania różniczkowe zwyczajne, część I\\Rozwiązania teoretyczne}
+\author{MOwNiT}
+\date{}
+
+\begin{document}
+\maketitle
+
+% ============================================================
+\section*{Zadanie 1 -- Układy równań pierwszego rzędu}
+
+\begin{komentarz}
+\textbf{Idea ogólna.}
+Wszystkie standardowe metody numeryczne (Euler, Runge--Kutta itd.) są zdefiniowane
+wyłącznie dla równań \emph{pierwszego rzędu} postaci $\mathbf{y}' = \mathbf{f}(t,\mathbf{y})$.
+Dlatego równanie $n$-tego rzędu zawsze sprowadzamy do układu $n$ równań pierwszego rzędu,
+wprowadzając pomocnicze zmienne stanu:
+\[
+  u_1 = y,\quad u_2 = y',\quad u_3 = y'',\quad \ldots,\quad u_n = y^{(n-1)}.
+\]
+Wtedy $u_1' = u_2,\; u_2' = u_3,\; \ldots,\; u_{n-1}' = u_n$,
+a ostatnie równanie pochodzi z oryginalnego ODE.
+\end{komentarz}
+
+\subsection*{(a) Równanie Van der Pola: $y'' = y'(1-y^2) - y$}
+
+Równanie jest drugiego rzędu, więc potrzebujemy dwóch zmiennych stanu.
+Definiujemy $u_1 = y$ (położenie) oraz $u_2 = y'$ (prędkość). Wtedy:
+\begin{itemize}
+  \item $u_1' = u_2$ \quad -- pochodna $y$ to $y'$, czyli $u_2$,
+  \item $u_2' = y'' = u_2(1 - u_1^2) - u_1$ \quad -- przepisujemy prawą stronę oryginału.
+\end{itemize}
+\[
+\boxed{
+\begin{cases}
+u_1' = u_2 \\
+u_2' = u_2(1 - u_1^2) - u_1
+\end{cases}
+}
+\quad
+\begin{pmatrix} u_1(t_0) \\ u_2(t_0) \end{pmatrix}
+=
+\begin{pmatrix} y(t_0) \\ y'(t_0) \end{pmatrix}
+\]
+
+\subsection*{(b) Równanie Blasiusa: $y''' = -yy''$}
+
+Równanie trzeciego rzędu -- potrzebujemy trzech zmiennych:
+$u_1 = y$, $u_2 = y'$, $u_3 = y''$.
+\begin{itemize}
+  \item $u_1' = u_2$, \quad $u_2' = u_3$ \quad -- standardowe,
+  \item $u_3' = y''' = -y \cdot y'' = -u_1 u_3$ \quad -- prawa strona oryginału.
+\end{itemize}
+\[
+\boxed{
+\begin{cases}
+u_1' = u_2 \\
+u_2' = u_3 \\
+u_3' = -u_1 u_3
+\end{cases}
+}
+\]
+
+\subsection*{(c) Problem dwóch ciał}
+
+Mamy dwa równania drugiego rzędu, co daje cztery równania pierwszego rzędu.
+Definiujemy $u_1 = y_1,\; u_2 = y_1',\; u_3 = y_2,\; u_4 = y_2'$
+oraz skrót $r = (u_1^2 + u_3^2)^{3/2}$ (mianownik sił grawitacyjnych).
+\[
+\boxed{
+\begin{cases}
+u_1' = u_2 \\
+u_2' = -GM\,u_1 / r \\
+u_3' = u_4 \\
+u_4' = -GM\,u_3 / r
+\end{cases}
+}
+\quad r = \bigl(u_1^2 + u_3^2\bigr)^{3/2}
+\]
+
+% ============================================================
+\section*{Zadanie 2 -- Autonomizacja układu}
+
+\begin{komentarz}
+\textbf{Idea.} Układ \emph{autonomiczny} to taki, gdzie prawa strona nie zależy
+\emph{jawnie} od~$t$, tylko od zmiennych stanu: $\mathbf{y}' = \mathbf{f}(\mathbf{y})$.
+Analiza stabilności i wiele algorytmów jest prostsza dla układów autonomicznych.
+Nieautonomiczny układ zamieniamy na autonomiczny, traktując $t$ jako dodatkową zmienną stanu.
+\end{komentarz}
+
+Dany nieautonomiczny układ (prawa strona zależy jawnie od $t$):
+\[
+\begin{cases}
+y_1' = y_1/t + y_2 t \\
+y_2' = t(y_2^2 - 1)/y_1
+\end{cases}
+\quad y_1(1)=1,\quad y_2(1)=0.
+\]
+
+\textbf{Trick autonomizacji:} wprowadzamy trzecią zmienną $u_3 = t$.
+Jej ``równanie ruchu'' to po prostu $u_3' = 1$ (czas płynie jednostajnie).
+
+Podstawiając $u_1 = y_1$, $u_2 = y_2$, $u_3 = t$, wszędzie zastępujemy $t$ przez $u_3$:
+\[
+\boxed{
+\begin{cases}
+u_1' = u_1/u_3 + u_2\,u_3 \\
+u_2' = u_3(u_2^2 - 1)/u_1 \\
+u_3' = 1
+\end{cases}
+}
+\quad
+\begin{pmatrix} u_1(1) \\ u_2(1) \\ u_3(1) \end{pmatrix}
+= \begin{pmatrix} 1 \\ 0 \\ 1 \end{pmatrix}
+\]
+Prawa strona nie zawiera już jawnie $t$ -- to układ autonomiczny trzech równań.
+
+% ============================================================
+\section*{Zadanie 3 -- Weryfikacja rozwiązania $y(t) = t(4-t)/4$}
+
+Problem: $y' = \sqrt{1 - y}$, $y(0) = 0$.
+Weryfikujemy, że funkcja $y(t) = \frac{t(4-t)}{4}$ jest rozwiązaniem.
+
+\bigskip
+\textbf{Krok 1 -- warunek początkowy:}
+\[
+y(0) = \frac{0 \cdot (4-0)}{4} = 0 \qquad \checkmark
+\]
+
+\textbf{Krok 2 -- obliczamy pochodną:}
+\[
+y'(t) = \frac{4 - 2t}{4} = 1 - \frac{t}{2}.
+\]
+
+\textbf{Krok 3 -- sprawdzamy, czy $y' = \sqrt{1-y}$:}
+\begin{align*}
+1 - y(t) &= 1 - \frac{t(4-t)}{4} = \frac{4 - 4t + t^2}{4} = \frac{(2-t)^2}{4} = \left(\frac{2-t}{2}\right)^2, \\
+\sqrt{1 - y(t)} &= \frac{2-t}{2} = 1 - \frac{t}{2} = y'(t). \qquad \checkmark
+\end{align*}
+
+\textbf{Krok 4 -- dziedzina rozwiązania.}
+Pierwiastek wymaga nieujemnego argumentu \emph{oraz} nieujemnej wartości
+(bo $\sqrt{\cdot} \geq 0$, czyli prawa strona $\geq 0$ co oznacza $y' \geq 0$):
+\[
+\sqrt{1-y} = \frac{2-t}{2} \geq 0 \quad \Rightarrow \quad t \leq 2.
+\]
+W połączeniu z warunkiem $y(0) = 0$ i $t \geq 0$ otrzymujemy:
+\[
+\boxed{t \in [0,\,2].}
+\]
+
+% ============================================================
+\section*{Zadanie 4 -- $y' = -5y$, $y(0) = 1$, $h = 0.5$}
+
+\begin{komentarz}
+Rozwiązanie analityczne: $y(t) = e^{-5t}$, bo pochodna $e^{-5t}$ to $-5e^{-5t} = -5y$.
+Wartości: $y(0)=1$, $y(0.5) = e^{-2.5} \approx 0.0821$.
+\end{komentarz}
+
+\subsection*{(a) Analityczna stabilność problemu}
+
+Zaburzamy warunek początkowy: zamiast $y(0)=1$ mamy $y(0)=1+\varepsilon$.
+Rozwiązanie z zaburzeniem: $(1+\varepsilon)e^{-5t}$.
+Różnica (błąd) między zaburzonym a dokładnym:
+\[
+\delta y(t) = \varepsilon\, e^{-5t} \;\xrightarrow{t\to\infty}\; 0.
+\]
+Ponieważ $\lambda = -5 < 0$, wykładnik zanika -- błąd maleje.
+Problem jest \textbf{asymptotycznie stabilny}.
+
+\subsection*{(b) Zbieżność metody Eulera}
+
+Jawna metoda Eulera dla $y' = -5y$:
+\[
+y_{n+1} = y_n + h\cdot(-5y_n) = y_n(1-5h).
+\]
+Po $n$ krokach (startując od $y_0 = 1$):
+\[
+y_n = (1-5h)^n.
+\]
+Dla ustalonego $t = nh$ (gdy $h\to 0$, $n\to\infty$):
+\[
+y_n = (1-5h)^{t/h} = \Bigl[(1-5h)^{1/(5h)}\Bigr]^{-5t}.
+\]
+Korzystamy z granicy definicyjnej: $\lim_{h\to 0}(1-5h)^{1/(5h)} = e^{-1}$,
+skąd $(1-5h)^{1/(5h)} \to e^{-1}$, a więc:
+\[
+y_n \;\to\; \bigl(e^{-1}\bigr)^{-5t} = e^{-5t} = y(t). \qquad \checkmark
+\]
+Metoda jest zbieżna.
+
+\subsection*{(c) Numeryczna stabilność metody Eulera dla $h=0.5$}
+
+\begin{komentarz}
+Stabilność numeryczna i analityczna to dwa różne pojęcia!
+Problem może być analitycznie stabilny, a metoda numeryczna -- niestabilna przy
+zbyt dużym kroku $h$.
+\end{komentarz}
+
+Definiujemy \textbf{czynnik wzmocnienia} -- przez ile mnoży się błąd w każdym kroku:
+\[
+\text{czynnik} = |1 + h\lambda|.
+\]
+Metoda jest stabilna wtedy i tylko wtedy, gdy czynnik $\leq 1$.
+
+Dla $\lambda = -5$, $h = 0.5$:
+\[
+|1 + 0.5 \cdot (-5)| = |1 - 2.5| = |-1.5| = 1.5 > 1. \quad \Rightarrow \quad \textbf{NIESTABILNA.}
+\]
+
+Wynik numeryczny: $y_1 = 1 \cdot (1-2.5) = -1.5$ (zamiast $\approx 0.082$!). Wynik jest ujemny -- metoda całkowicie rozbiega się.
+
+Warunek stabilności jawnego Eulera: $|1+h\lambda| \leq 1$, co dla $\lambda = -5$ daje:
+\[
+h < \frac{2}{|\lambda|} = \frac{2}{5} = 0.4.
+\]
+Krok $h = 0.5 > 0.4$ narusza ten warunek.
+
+\subsection*{(d) Obliczenia jawną metodą Eulera ($h=0.5$)}
+
+\[
+y_0 = 1.000000, \qquad
+y_1 = y_0(1-5\cdot 0.5) = 1\cdot(-1.5) = \mathbf{-1.500000}.
+\]
+Dokładne: $y(0.5) = e^{-2.5} \approx 0.082$. Błąd bezwzględny $\approx 1.582$ -- niestabilność.
+
+\subsection*{(e) Stabilność niejawnej metody Eulera dla $h=0.5$}
+
+Niejawna metoda Eulera używa wartości funkcji w \emph{nowym} punkcie:
+\[
+y_{n+1} = y_n + h\,f(y_{n+1}) = y_n - 5h\,y_{n+1}.
+\]
+Przenosimy $y_{n+1}$ na lewą stronę:
+\[
+y_{n+1}(1 + 5h) = y_n \quad\Rightarrow\quad y_{n+1} = \frac{y_n}{1 + 5h}.
+\]
+Czynnik wzmocnienia:
+\[
+\left|\frac{1}{1+5h}\right| = \frac{1}{1+5\cdot 0.5} = \frac{1}{3.5} \approx 0.286 < 1. \quad\Rightarrow\quad \textbf{STABILNA.}
+\]
+Niejawna metoda Eulera jest \textbf{A-stabilna} -- czynnik $< 1$ dla \emph{dowolnego} $h>0$, gdy $\lambda < 0$.
+
+\subsection*{(f) Obliczenia niejawną metodą Eulera ($h=0.5$)}
+
+\[
+y_0 = 1.000000, \qquad
+y_1 = \frac{y_0}{1+5\cdot 0.5} = \frac{1}{3.5} \approx \mathbf{0.285714}.
+\]
+Dokładne: $0.082$. Błąd $\approx 0.20$ -- wynik stabilny i sensowny (dodatni), choć niedokładny przy tak dużym $h$.
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+Metoda & $y(0.5)$ & Błąd bezwzgl. & Stabilna? \\
+\midrule
+Dokładne & 0.082085 & 0 & -- \\
+Euler jawny & $-1.500000$ & 1.582 & NIE \\
+Euler niejawny & 0.285714 & 0.204 & TAK \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{(g) Maksymalny dopuszczalny krok $h$}
+
+Globalny błąd metody Eulera w punkcie $t$ wynosi w przybliżeniu:
+\[
+|y_n - y(t)| \approx \frac{h}{2}\,\max_{\xi\in[0,t]}|y''(\xi)|\cdot t.
+\]
+Dla $y(t)=e^{-5t}$: $y''(t) = 25e^{-5t}$, maksimum na $[0,0.5]$ to $y''(0)=25$. Zatem:
+\[
+|y_n - y(t)| \lesssim \frac{h}{2}\cdot 25 \cdot 0.5 = 6.25\,h.
+\]
+Warunek $6.25h < 0.001$ daje $h < 1.6\times 10^{-4}$, a liczba kroków:
+\[
+n = \frac{t}{h} = \frac{0.5}{1.6\times 10^{-4}} \approx \mathbf{3125 \text{ kroków}}.
+\]
+
+\subsection*{(h) Iteracja prosta dla niejawnego Eulera -- zbieżność}
+
+Równanie do rozwiązania w każdym kroku: $y_{n+1} = y_n - 5h\,y_{n+1}$.
+Przepisujemy jako iterację prostą z funkcją $\varphi(y) = y_n - 5h\,y$:
+\[
+y^{(k+1)} = \varphi(y^{(k)}).
+\]
+Warunek zbieżności iteracji prostej (twierdzenie Banacha): $|\varphi'(y)| < 1$.
+\[
+|\varphi'(y)| = 5h < 1 \quad\Rightarrow\quad h < 0.2.
+\]
+Dla $h=0.5$ iteracja prosta \textbf{nie zbiega}. Uzasadnione jest użycie \textbf{metody Newtona},
+która zbiega kwadratowo i nie wymaga ograniczenia na $h$.
+
+% ============================================================
+\section*{Zadanie 5 -- Stabilność Eulera dla układu $2\times 2$}
+
+\begin{komentarz}
+Dla układu $\mathbf{y}' = A\mathbf{y}$ stabilność Eulera sprawdzamy osobno dla
+każdej wartości własnej $\lambda_i$ macierzy $A$, stosując ten sam warunek
+co dla skalara: $|1 + h\lambda_i| \leq 1$.
+\end{komentarz}
+
+Układ:
+\[
+\mathbf{y}' = A\mathbf{y}, \qquad
+A = \begin{pmatrix} -2 & 1 \\ -1 & -2 \end{pmatrix}.
+\]
+
+\textbf{Krok 1: wyznaczamy wartości własne $A$.}
+
+Z równania $\det(A-\lambda I)=0$:
+\[
+(-2-\lambda)(-2-\lambda) - (1)(-1) = (-2-\lambda)^2 + 1 = 0,
+\]
+\[
+(2+\lambda)^2 = -1 \quad\Rightarrow\quad \lambda_{1,2} = -2 \pm i.
+\]
+Obie wartości własne mają część rzeczywistą $-2 < 0$, więc problem jest analitycznie stabilny.
+
+\textbf{Krok 2: warunek stabilności Eulera dla $\lambda = -2+i$.}
+
+Liczymy moduł kwadratowy czynnika wzmocnienia:
+\begin{align*}
+|1 + h\lambda|^2 &= |1 + h(-2+i)|^2 = |(1-2h) + hi|^2 \\
+                  &= (1-2h)^2 + h^2 = 1 - 4h + 4h^2 + h^2 = 1 - 4h + 5h^2.
+\end{align*}
+(Dla $\lambda = -2-i$ wynik jest identyczny z symetrii).
+
+\textbf{Krok 3: rozwiązujemy nierówność $|1+h\lambda|^2 \leq 1$.}
+\[
+1 - 4h + 5h^2 \leq 1 \quad\Rightarrow\quad 5h^2 - 4h \leq 0 \quad\Rightarrow\quad h(5h-4) \leq 0.
+\]
+Dla $h > 0$: musi zachodzić $5h - 4 \leq 0$, czyli:
+\[
+\boxed{h \leq \frac{4}{5} = 0.8.}
+\]
+Metoda Eulera jest stabilna dla tego układu wtedy i tylko wtedy, gdy \textbf{$h \leq 0.8$}.
+
+\end{document}

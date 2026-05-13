@@ -1,0 +1,287 @@
+\documentclass[12pt, a4paper]{article}
+
+% Pakiety
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% Zakaz dzielenia wyrazów
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% Zmiana nazwy float figure: Rysunek -> Wykres
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% Styl listingów
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b,
+  showstringspaces=false,
+  columns=flexible,
+  keepspaces=true,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'{o}}}1
+            {ś}{{\'{s}}}1 {ł}{{\l{}}}1 {ź}{{\'{z}}}1
+            {ż}{{\.z}}1 {ć}{{\'{c}}}1 {ń}{{\'{n}}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'{O}}}1
+            {Ś}{{\'{S}}}1 {Ł}{{L}}1,
+}
+
+% Strona tytułowa
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 9 \textendash{} Równania różniczkowe zwyczajne (część I)
+}
+\author{Mateusz Stoch}
+\date{13 maja 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1 \textendash{} Sprowadzanie do układu równań pierwszego rzędu}
+% ============================================================
+\textbf{Polecenie:} Przedstaw każde z poniższych równań różniczkowych zwyczajnych jako równoważny układ równań pierwszego rzędu.
+
+Rozwiązanie równań wyższego rzędu z wykorzystaniem standardowych metod numerycznych wymaga uprzedniego przekształcenia ich do układu równań pierwszego rzędu poprzez wprowadzenie zmiennych pomocniczych reprezentujących kolejne pochodne.
+
+\textbf{(a) Równanie Van der Pol'a:} $y'' = y'(1 - y^2) - y$ \\
+Wprowadzono zmienne $u_1 = y$ oraz $u_2 = y'$.
+\[
+  \begin{cases}
+    u_1' = u_2 \\
+    u_2' = u_2(1 - u_1^2) - u_1
+  \end{cases}
+\]
+
+\textbf{(b) Równanie Blasiusa:} $y''' = -yy''$ \\
+Wprowadzono zmienne $u_1 = y$, $u_2 = y'$ oraz $u_3 = y''$.
+\[
+  \begin{cases}
+    u_1' = u_2 \\
+    u_2' = u_3 \\
+    u_3' = -u_1 u_3
+  \end{cases}
+\]
+
+\textbf{(c) Problem dwóch ciał:} 
+\[ y''_1 = -\frac{GMy_1}{(y_1^2 + y_2^2)^{3/2}}, \quad y''_2 = -\frac{GMy_2}{(y_1^2 + y_2^2)^{3/2}} \]
+Wprowadzono zmienne $u_1 = y_1$, $u_2 = y_1'$, $u_3 = y_2$ oraz $u_4 = y_2'$. Oznaczając $r = (u_1^2 + u_3^2)^{3/2}$, uzyskano:
+\[
+  \begin{cases}
+    u_1' = u_2 \\
+    u_2' = -GM u_1 / r \\
+    u_3' = u_4 \\
+    u_4' = -GM u_3 / r
+  \end{cases}
+\]
+
+% ============================================================
+\section{Zadanie 2 \textendash{} Autonomizacja problemu}
+% ============================================================
+\textbf{Polecenie:} Przekształć poniższy problem początkowy do autonomicznego problemu początkowego:
+\[
+  \begin{cases}
+    y_1' = y_1/t + y_2 t \\
+    y_2' = t(y_2^2 - 1)/y_1
+  \end{cases} \quad y_1(1) = 1, \quad y_2(1) = 0
+\]
+
+Aby wyeliminować jawną zależność od zmiennej czasu $t$, wprowadza się dodatkową zmienną stanu $u_3 = t$, dla której $u_3' = 1$. Zastępując $y_1$ i $y_2$ przez $u_1$ i $u_2$, układ autonomiczny przyjmuje postać:
+\[
+  \begin{cases}
+    u_1' = u_1/u_3 + u_2 u_3 \\
+    u_2' = u_3(u_2^2 - 1)/u_1 \\
+    u_3' = 1
+  \end{cases} \quad u_1(1)=1, \quad u_2(1)=0, \quad u_3(1)=1
+\]
+
+% ============================================================
+\section{Zadanie 3 \textendash{} Weryfikacja rozwiązania}
+% ============================================================
+\textbf{Polecenie:} Dany jest problem początkowy: $y' = \sqrt{1 - y}$, $y(0) = 0$. Pokaż, że funkcja $y(t) = t(4 - t)/4$ spełnia równanie i warunek początkowy oraz wyznacz dziedzinę.
+
+Warunek początkowy: $y(0) = \frac{0 \cdot 4}{4} = 0$. \\
+Pochodna badanej funkcji wynosi: $y'(t) = 1 - \frac{t}{2}$. \\
+Podstawienie do równania różniczkowego daje:
+\[
+  \sqrt{1 - y(t)} = \sqrt{\frac{4 - 4t + t^2}{4}} = \sqrt{\left(\frac{2-t}{2}\right)^2} = \left| 1 - \frac{t}{2} \right|
+\]
+Równość $y' = \sqrt{1-y}$ zachodzi pod warunkiem, że wynik pierwiastkowania jest nieujemny ($1 - t/2 \geq 0$). Wobec warunku $t \geq 0$, wyznaczona dziedzina to $t \in [0, 2]$.
+
+% ============================================================
+\section{Zadanie 4 \textendash{} Analiza i numeryka metody Eulera}
+% ============================================================
+\textbf{Polecenie:} Dane jest równanie $y' = -5y$ z warunkiem początkowym $y(0) = 1$. Równanie rozwiązuje się numerycznie z krokiem $h = 0.5$. Rozpatrz poniższe podpunkty.
+
+\begin{itemize}
+  \item[\textbf{(a)}] \textbf{Analityczna stabilność:} Po wprowadzeniu zaburzenia $\varepsilon$ do warunku początkowego, rozwiązanie przyjmuje postać $y(t) = (1+\varepsilon)e^{-5t}$. Różnica między rozwiązaniem zaburzonym a dokładnym wynosi $\delta y(t) = \varepsilon e^{-5t}$. Ponieważ $\lambda = -5 < 0$, błąd ten zanika w czasie ($\lim_{t \to \infty} \varepsilon e^{-5t} = 0$), co oznacza, że problem jest asymptotycznie stabilny.
+
+  \item[\textbf{(b)}] \textbf{Zbieżność metody Eulera:} Wzór na jawną metodę Eulera to $y_{n+1} = y_n + h(-5y_n) = y_n(1-5h)$. Po $n$ iteracjach startując z $y_0 = 1$ otrzymuje się $y_n = (1-5h)^n$. Przekształcając to dla ustalonego punktu $t = nh$, uzyskuje się:
+  \[
+    y_n = (1-5h)^{t/h} = \left[ (1-5h)^{\frac{1}{5h}} \right]^{-5t}
+  \]
+  Przy $h \to 0$, wewnętrzne wyrażenie z definicji dąży do $e^{-1}$, a w efekcie cały wynik dąży do wartości dokładnego rozwiązania $e^{-5t}$, co dowodzi zbieżności metody.
+
+  \item[\textbf{(c)}] \textbf{Numeryczna stabilność metody jawnej:} Metoda jest stabilna, gdy tzw. czynnik wzmocnienia $|1 + h\lambda| \leq 1$. Obliczenia dla zadanego kroku dają:
+  \[
+    |1 + 0.5 \cdot (-5)| = |1 - 2.5| = |-1.5| = 1.5 > 1
+  \]
+  Przekroczenie jedności oznacza, że przy kroku $h=0.5$ metoda staje się całkowicie niestabilna i obarczona rosnącym błędem.
+
+  \item[\textbf{(d)}] \textbf{Obliczenia numeryczne dla metody jawnej:} Zgodnie z wyprowadzonym wyżej wzorem, w węźle $t=0.5$ po jednym kroku metoda daje przybliżenie:
+  \[
+    y_1 = y_0(1-5 \cdot 0.5) = 1 \cdot (-1.5) = -1.5
+  \]
+  Ze względu na niestabilność, wynik ten jest ujemny i kompletnie błędny względem precyzyjnej wartości $y(0.5) = e^{-2.5} \approx 0.082$.
+
+  \item[\textbf{(e)}] \textbf{Stabilność niejawnej metody Eulera:} W metodzie niejawnej kolejny węzeł wyznacza się z użyciem wartości funkcji w nowym punkcie: $y_{n+1} = y_n - 5h y_{n+1}$. Po przekształceniach daje to $y_{n+1} = \frac{y_n}{1 + 5h}$. Współczynnik wzmocnienia wyliczony dla tego przypadku to:
+  \[
+    \left|\frac{1}{1+5h}\right| = \left|\frac{1}{1+2.5}\right| = \frac{1}{3.5} \approx 0.286 < 1
+  \]
+  Otrzymana wartość $< 1$ gwarantuje metodyczną A-stabilność dla zastosowanego kroku $h$.
+
+  \item[\textbf{(f)}] \textbf{Obliczenia numeryczne dla metody niejawnej:} Podstawiając zadany krok do wyprowadzonego wariantu niejawnego:
+  \[
+    y_1 = \frac{y_0}{1+5h} = \frac{1}{1+2.5} = \frac{1}{3.5} \approx 0.286
+  \]
+  Mimo ograniczonej precyzji ze względu na wielki krok $h=0.5$ (odchylenie od $0.082$), wyliczony wynik pozostaje stabilny numerycznie i przyjmuje sensowne wartości dodatnie.
+
+  \item[\textbf{(g)}] \textbf{Maksymalna dopuszczalna wartość kroku $h$:} Globalny błąd algorytmu opiera się na szacowaniu $|y_n - y(t)| \approx \frac{h}{2} \max |y''(\xi)| t$. Skoro $y(t) = e^{-5t}$, to $y''(t) = 25e^{-5t}$. Jej maksymalna wartość w przedziale $[0, 0.5]$ znajduje się w $t=0$ i wynosi $25$. Rozwiązując nierówność dla błędu $0.001$:
+  \[
+    \frac{h}{2} \cdot 25 \cdot 0.5 \leq 0.001 \implies 6.25h \leq 0.001 \implies h \leq 1.6 \times 10^{-4}
+  \]
+  Aby dotrzeć numerycznie do $t=0.5$ przy tak małym kroku, należałoby wykonać $n = 0.5 / (1.6 \times 10^{-4}) \approx 3125$ kroków.
+
+  \item[\textbf{(h)}] \textbf{Metoda wyznaczania $y_{n+1}$:} Iteracja prosta dla niejawnego Eulera przyjmuje postać $\varphi(y) = y_n - 5hy$. Rozwiązanie tego algorytmu jest zbieżne z twierdzenia Banacha tylko gdy $|\varphi'(y)| < 1$, czyli w tym wypadku $|-5h| < 1 \implies h < 0.2$. Z tego powodu dla narzuconego problemu kroku $h=0.5$ iteracja prosta od razu by się rozbiegła. W związku z tym, użycie w to miejsce metody Newtona (która nie ma takiego uciążliwego ograniczenia na rozmiar kroku) jest jedynym prawidłowym wyjściem.
+\end{itemize}
+
+% ============================================================
+\section{Zadanie 5 \textendash{} Stabilność układu równań}
+% ============================================================
+\textbf{Polecenie:} Dany jest układ równań $y'_1 = -2y_1 + y_2$, $y'_2 = -y_1 - 2y_2$. Wyznacz dopuszczalne wartości kroku $h$ dla stabilności metody Eulera.
+
+\begin{itemize}
+  \item \textbf{Zapis macierzowy:} Rozwiązanie stabilności układu równań liniowych sprowadza się do analizy wartości własnych jego macierzy współczynników. Zapisując podany układ w postaci $\mathbf{y}' = A \mathbf{y}$, otrzymuje się:
+  \[
+    A = \begin{pmatrix} -2 & 1 \\ -1 & -2 \end{pmatrix}
+  \]
+
+  \item \textbf{Wartości własne:} Następnie wyznaczane są wartości własne z równania charakterystycznego $\det(A - \lambda I) = 0$:
+  \[
+    \det \begin{pmatrix} -2-\lambda & 1 \\ -1 & -2-\lambda \end{pmatrix} = (-2-\lambda)^2 - (-1) \cdot 1 = (\lambda+2)^2 + 1 = 0
+  \]
+  Rozwiązaniem tego równania w dziedzinie liczb zespolonych są sprzężone wartości własne: $\lambda_{1,2} = -2 \pm i$.
+
+  \item \textbf{Kryterium stabilności:} Dla jawnej metody Eulera obszar stabilności bezwzględnej zdefiniowany jest jako zbiór takich wartości zespolonych $h\lambda$, dla których czynnik wzmocnienia leży wewnątrz okręgu jednostkowego. Warunek ten wyraża się nierównością $|1 + h\lambda| \leq 1$. 
+
+  \item \textbf{Rozwiązanie nierówności:} Podstawiając jedną z wyliczonych wartości $\lambda = -2 + i$, otrzymuje się liczbę zespoloną z częścią rzeczywistą $(1-2h)$ oraz urojoną $h$. Kwadrat modułu tej liczby nie może przekroczyć $1$:
+  \[
+    | (1-2h) + ih |^2 \leq 1 \implies (1-2h)^2 + h^2 \leq 1
+  \]
+  Po rozwinięciu wzoru skróconego mnożenia powstaje równanie:
+  \[
+    1 - 4h + 4h^2 + h^2 \leq 1 \implies 5h^2 - 4h \leq 0
+  \]
+
+  \item \textbf{Dopuszczalny krok:} Wyciągając zmienną $h$ przed nawias $h(5h - 4) \leq 0$ oraz zakładając, że krok czasowy musi być z natury wartością dodatnią, uzyskuje się ostateczne kryterium. Metoda Eulera dla tego konkretnego układu pozostaje stabilna numerycznie dla rozmiaru kroku ograniczonego przez:
+  \[
+    h \leq \frac{4}{5} \implies h \in (0, 0.8]
+  \]
+\end{itemize}
+
+% ============================================================
+\section{Zadanie 6 \textendash{} Rząd zbieżności metody Eulera}
+% ============================================================
+\textbf{Polecenie:} Dany jest problem $y' = \alpha t^{\alpha-1}$, $y(0) = 0$. Wyznacz numerycznie wartości błędu oraz empiryczny rząd zbieżności dla $\alpha \in \{2.5, 1.5, 1.1\}$ i kroków $h \in \{0.2, 0.1, 0.05\}$. Wyjaśnij otrzymane wyniki.
+
+\begin{itemize}
+  \item \textbf{Implementacja algorytmu:} Do rozwiązania zadania napisano dedykowaną funkcję wykonującą symulację dla podanych parametrów kroku. Kod skróconej implementacji jawnej metody Eulera prezentuje się następująco:
+\begin{lstlisting}[caption={Skrócony kod rozwiązania}]
+def euler_solve(alpha, h, t_end=1.0):
+    t, y = 0.0, 0.0
+    ts, ys = [t], [y]
+    while t < t_end - h/2:
+        dydt = alpha * t**(alpha - 1.0) if t > 0 else 0.0
+        y = y + h * dydt
+        t = t + h
+        ts.append(t), ys.append(y)
+    return np.array(ts), np.array(ys)
+\end{lstlisting}
+
+  \item \textbf{Tabela błędów:} Poniższe zestawienie pokazuje, jak zachowywał się błąd bezwzględny dla poszczególnych badanych parametrów $\alpha$ w węźle $t=1$ i dla zmniejszających się rozmiarów kroku:
+\begin{center}
+\begin{tabular}{r|r|r|r}
+\toprule
+$\alpha$ & Błąd dla $h=0.2$ & Błąd dla $h=0.1$ & Błąd dla $h=0.05$ \\
+\midrule
+$2.5$ & $0{,}2386$ & $0{,}1220$ & $0{,}0617$ \\
+$1.5$ & $0{,}1753$ & $0{,}0842$ & $0{,}0408$ \\
+$1.1$ & $0{,}1877$ & $0{,}0913$ & $0{,}0444$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+  \item \textbf{Obliczony rząd zbieżności:} Rząd wyliczono empirycznie z powyższego zestawienia błędów. Wyniki dla poszczególnych stałych potęg wynoszą odpowiednio: dla $\alpha=2.5 \implies p \approx 0.98$, dla $\alpha=1.5 \implies p \approx 1.04$, dla $\alpha=1.1 \implies p \approx 1.03$. 
+  
+  \item \textbf{Analiza wyników:} W każdym testowanym wariancie wyliczony rząd oscyluje wokół $p=1$. Wynika to z faktu, że metoda Eulera ze swojej natury charakteryzuje się błędem o teoretycznej złożoności $O(h^p)$, gdzie dla równań z potęgą $p = \min(1, \alpha)$. Przy badanych parametrach $\alpha > 1$, prawostronna pochodna wykazuje wymaganą gładkość dla $t=0$, potwierdzając numerycznie i analitycznie liniowy rząd zbieżności zastosowanego algorytmu.
+
+  \item \textbf{Wizualizacja (Wykres 1):} Wymienione zbieżności i wyniki błędów przedstawiono dodatkowo w formie graficznej na poniższym wykresie.
+  
+  \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.9\textwidth]{wykres1.png}
+      \caption{Wykres nr 1 - Badanie rzędu zbieżności metody Eulera}
+      \label{fig:wykres1}
+  \end{figure}
+\end{itemize}
+
+% ============================================================
+\section{Podsumowanie}
+% ============================================================
+Na podstawie przeprowadzonych w laboratorium zadań wyciągnięto następujące wnioski:
+\begin{itemize}
+    \item Jawna metoda Eulera cechuje się kiepską stabilnością i wymaga narzucenia bardzo małych kroków $h$, co często jest nieefektywne.
+    \item Niejawna metoda Eulera zachowuje świetną stabilność nawet dla dużych kroków, wymaga jednak zastosowania w każdej iteracji dodatkowych obliczeń.
+    \item Metoda Eulera posiada empirycznie udowodniony liniowy rząd zbieżności ($O(h)$).
+\end{itemize}
+
+\end{document}
