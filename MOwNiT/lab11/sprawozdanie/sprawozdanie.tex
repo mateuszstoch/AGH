@@ -279,13 +279,13 @@ Wzory te zachodzą dla wszystkich mas wewnętrznych $i = 1, \dots, n-1$.
 
 Liczba stopni swobody dla $N=40$ wynosi 78 (39 wolnych punktów po 2 współrzędne każdy). Energia potencjalna dla początkowego ułożenia łańcucha (jako prostej łączącej punkty końcowe) wynosi $20{,}7246$ J.
 
-Do optymalizacji wybrano krok $\alpha = 0{,}0005$. Wartość ta okazała się jednak niestabilna. Na skutek zbyt dużego kroku w stosunku do lokalnego uwarunkowania funkcji (które dynamicznie się zmienia podczas ruchu punktów), algorytm uległ rozbieżności. Końcowa energia po 5000 iteracji wyniosła aż $1\,881\,127{,}0167$ J, co oznacza całkowitą eksplozję rozwiązania. Stały krok uniemożliwił poprawne wyznaczenie stanu równowagi łańcucha.
+Do optymalizacji wybrano krok $\alpha = 0{,}0005$. Wartość ta jest mniejsza od teoretycznego progu stabilności $\alpha_{\max} \approx 2 / L_{\text{smooth}} \approx 7 \cdot 10^{-4}$ (gdzie oszacowana stała Lipschitza gradientu wynosi $L_{\text{smooth}} \approx k(n+1) \approx 2870$). Dzięki poprawnej implementacji gradientu algorytm działa w pełni stabilnie i nie ulega rozbieżności nawet bez stosowania clippingu gradientu. Końcowa energia po 20000 iteracji wyniosła $-51{,}4276$ J, choć ze względu na stały krok algorytm nie osiągnął pełnej zbieżności z tolerancją $10^{-6}$.
 
 \subsection{Zadanie 2(b): Gradient prosty z malejącym krokiem}
 
 \textbf{Treść zadania:} Minimalizuj całkowitą energię potencjalną łańcucha metodą gradientu prostego ze współczynnikiem uczenia $\alpha$ malejącym wykładniczo co pewną liczbę iteracji.
 
-W tej wersji algorytmu zastosowano krok początkowy $\alpha_0 = 10^{-3}$, który był zmniejszany o czynnik $0{,}7$ co 200 iteracji. Choć zapobiegło to całkowitej eksplozji (dzięki redukcji kroku w miarę upływu iteracji), algorytm wciąż nie zdołał poprawnie zbiec. Krok uczenia malał zbyt szybko lub początkowe iteracje zdążyły odrzucić rozwiązanie daleko od optimum. Końcowa energia wyniosła $119\,893{,}7925$ J, a uzyskany kształt łańcucha był daleki od fizycznego stanu równowagi.
+W tej wersji algorytmu zastosowano krok początkowy $\alpha_0 = 10^{-2}$, który był zmniejszany o czynnik $0{,}7$ co 200 iteracji. Algorytm zachował pełną stabilność bez stosowania clippingu gradientu, osiągając po 20000 iteracji energię $-50{,}9222$ J. Spadek długości kroku w późniejszej fazie spowolnił dalszą optymalizację, co uniemożliwiło osiągnięcie pełnej zbieżności w ramach limitu iteracji.
 
 \subsection{Zadanie 2(c): Gradient prosty z przeszukiwaniem liniowym}
 
@@ -293,7 +293,7 @@ W tej wersji algorytmu zastosowano krok początkowy $\alpha_0 = 10^{-3}$, który
 
 W tym podejściu długość kroku $\alpha_k$ była dobierana dynamicznie w każdej iteracji przy użyciu metody backtracking line search z warunkiem Armijo. Parametry wyszukiwania to: $\alpha_0 = 1{,}0$, współczynnik zmniejszania kroku $\rho = 0{,}5$ oraz stała warunku Armijo $c = 10^{-4}$.
 
-Dzięki dynamicznemu doborowi kroku algorytm stabilnie i szybko schodził w kierunku minimum, osiągając zbieżność. Końcowa energia wyniosła $12{,}9596$ J po 2000 iteracji.
+Dzięki dynamicznemu doborowi kroku algorytm stabilnie i szybko schodził w kierunku minimum, osiągając zbieżność (norma gradientu poniżej $10^{-6}$) po 2182 iteracjach. Końcowa energia wyniosła $-51{,}4583$ J.
 
 Porównanie zbieżności energii oraz ostateczny kształt łańcucha przedstawiono na Wykresie~\ref{fig:wykres3}.
 
@@ -314,9 +314,9 @@ Podsumowanie porównania metod optymalizacji zebrano w Tabeli~\ref{tab:tabela1}.
     \toprule
     Wariant algorytmu & Końcowa energia $E_{\text{final}}$ [J] & Liczba iteracji \\
     \midrule
-    Stały krok ($\alpha = 0{,}0005$) & $1\,881\,127{,}0167$ & 5000 (brak zbieżności) \\
-    Malejący krok ($\alpha_0 = 10^{-3}$) & $119\,893{,}7925$ & 5000 (brak zbieżności) \\
-    Przeszukiwanie liniowe (Armijo) & $12{,}9596$ & 2000 (zbieżność) \\
+    Stały krok ($\alpha = 0{,}0005$) & $-51{,}4276$ & 20000 (brak zbieżności) \\
+    Malejący krok ($\alpha_0 = 10^{-2}$) & $-50{,}9222$ & 20000 (brak zbieżności) \\
+    Przeszukiwanie liniowe (Armijo) & $-51{,}4583$ & 2182 (zbieżność) \\
     \bottomrule
   \end{tabular}
 \end{table}
