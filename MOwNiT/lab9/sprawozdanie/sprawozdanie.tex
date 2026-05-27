@@ -67,7 +67,7 @@
 % Strona tytułowa
 \title{
   \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
-  \large Laboratorium 9 \textendash{} Równania różniczkowe zwyczajne (część I)
+  \large Laboratorium 9: Równania różniczkowe zwyczajne (część I)
 }
 \author{Mateusz Stoch}
 \date{13 maja 2026}
@@ -77,13 +77,14 @@
 \maketitle
 
 % ============================================================
-\section{Zadanie 1 \textendash{} Sprowadzanie do układu równań pierwszego rzędu}
+\section{Zadanie 1: Sprowadzanie do układu równań pierwszego rzędu}
 % ============================================================
 \textbf{Polecenie:} Przedstaw każde z poniższych równań różniczkowych zwyczajnych jako równoważny układ równań pierwszego rzędu.
 
 Rozwiązanie równań wyższego rzędu z wykorzystaniem standardowych metod numerycznych wymaga uprzedniego przekształcenia ich do układu równań pierwszego rzędu poprzez wprowadzenie zmiennych pomocniczych reprezentujących kolejne pochodne.
 
-\textbf{(a) Równanie Van der Pol'a:} $y'' = y'(1 - y^2) - y$ \\
+\subsection{Zadanie 1(a): Równanie Van der Pola}
+$y'' = y'(1 - y^2) - y$ \\
 Wprowadzono zmienne $u_1 = y$ oraz $u_2 = y'$.
 \[
   \begin{cases}
@@ -92,7 +93,8 @@ Wprowadzono zmienne $u_1 = y$ oraz $u_2 = y'$.
   \end{cases}
 \]
 
-\textbf{(b) Równanie Blasiusa:} $y''' = -yy''$ \\
+\subsection{Zadanie 1(b): Równanie Blasiusa}
+$y''' = -yy''$ \\
 Wprowadzono zmienne $u_1 = y$, $u_2 = y'$ oraz $u_3 = y''$.
 \[
   \begin{cases}
@@ -102,7 +104,7 @@ Wprowadzono zmienne $u_1 = y$, $u_2 = y'$ oraz $u_3 = y''$.
   \end{cases}
 \]
 
-\textbf{(c) Problem dwóch ciał:} 
+\subsection{Zadanie 1(c): Problem dwóch ciał}
 \[ y''_1 = -\frac{GMy_1}{(y_1^2 + y_2^2)^{3/2}}, \quad y''_2 = -\frac{GMy_2}{(y_1^2 + y_2^2)^{3/2}} \]
 Wprowadzono zmienne $u_1 = y_1$, $u_2 = y_1'$, $u_3 = y_2$ oraz $u_4 = y_2'$. Oznaczając $r = (u_1^2 + u_3^2)^{3/2}$, uzyskano:
 \[
@@ -115,7 +117,7 @@ Wprowadzono zmienne $u_1 = y_1$, $u_2 = y_1'$, $u_3 = y_2$ oraz $u_4 = y_2'$. Oz
 \]
 
 % ============================================================
-\section{Zadanie 2 \textendash{} Autonomizacja problemu}
+\section{Zadanie 2: Autonomizacja problemu}
 % ============================================================
 \textbf{Polecenie:} Przekształć poniższy problem początkowy do autonomicznego problemu początkowego:
 \[
@@ -135,7 +137,7 @@ Aby wyeliminować jawną zależność od zmiennej czasu $t$, wprowadza się doda
 \]
 
 % ============================================================
-\section{Zadanie 3 \textendash{} Weryfikacja rozwiązania}
+\section{Zadanie 3: Weryfikacja rozwiązania}
 % ============================================================
 \textbf{Polecenie:} Dany jest problem początkowy: $y' = \sqrt{1 - y}$, $y(0) = 0$. Pokaż, że funkcja $y(t) = t(4 - t)/4$ spełnia równanie i warunek początkowy oraz wyznacz dziedzinę.
 
@@ -148,54 +150,60 @@ Podstawienie do równania różniczkowego daje:
 Równość $y' = \sqrt{1-y}$ zachodzi pod warunkiem, że wynik pierwiastkowania jest nieujemny ($1 - t/2 \geq 0$). Wobec warunku $t \geq 0$, wyznaczona dziedzina to $t \in [0, 2]$.
 
 % ============================================================
-\section{Zadanie 4 \textendash{} Analiza i numeryka metody Eulera}
+\section{Zadanie 4: Analiza i numeryka metody Eulera}
 % ============================================================
 \textbf{Polecenie:} Dane jest równanie $y' = -5y$ z warunkiem początkowym $y(0) = 1$. Równanie rozwiązuje się numerycznie z krokiem $h = 0.5$. Rozpatrz poniższe podpunkty.
 
-\begin{itemize}
-  \item[\textbf{(a)}] \textbf{Analityczna stabilność:} Po wprowadzeniu zaburzenia $\varepsilon$ do warunku początkowego, rozwiązanie przyjmuje postać $y(t) = (1+\varepsilon)e^{-5t}$. Różnica między rozwiązaniem zaburzonym a dokładnym wynosi $\delta y(t) = \varepsilon e^{-5t}$. Ponieważ $\lambda = -5 < 0$, błąd ten zanika w czasie ($\lim_{t \to \infty} \varepsilon e^{-5t} = 0$), co oznacza, że problem jest asymptotycznie stabilny.
+\subsection{Zadanie 4(a): Analityczna stabilność}
+Po wprowadzeniu zaburzenia $\varepsilon$ do warunku początkowego, rozwiązanie przyjmuje postać $y(t) = (1+\varepsilon)e^{-5t}$. Różnica między rozwiązaniem zaburzonym a dokładnym wynosi $\delta y(t) = \varepsilon e^{-5t}$. Ponieważ $\lambda = -5 < 0$, błąd ten zanika w czasie ($\lim_{t \to \infty} \varepsilon e^{-5t} = 0$), co oznacza, że problem jest asymptotycznie stabilny.
 
-  \item[\textbf{(b)}] \textbf{Zbieżność metody Eulera:} Wzór na jawną metodę Eulera to $y_{n+1} = y_n + h(-5y_n) = y_n(1-5h)$. Po $n$ iteracjach startując z $y_0 = 1$ otrzymuje się $y_n = (1-5h)^n$. Przekształcając to dla ustalonego punktu $t = nh$, uzyskuje się:
-  \[
-    y_n = (1-5h)^{t/h} = \left[ (1-5h)^{\frac{1}{5h}} \right]^{-5t}
-  \]
-  Przy $h \to 0$, wewnętrzne wyrażenie z definicji dąży do $e^{-1}$, a w efekcie cały wynik dąży do wartości dokładnego rozwiązania $e^{-5t}$, co dowodzi zbieżności metody.
+\subsection{Zadanie 4(b): Zbieżność metody Eulera}
+Wzór na jawną metodę Eulera to $y_{n+1} = y_n + h(-5y_n) = y_n(1-5h)$. Po $n$ iteracjach startując z $y_0 = 1$ otrzymuje się $y_n = (1-5h)^n$. Przekształcając to dla ustalonego punktu $t = nh$, uzyskuje się:
+\[
+  y_n = (1-5h)^{t/h} = \left[ (1-5h)^{\frac{1}{5h}} \right]^{-5t}
+\]
+Przy $h \to 0$, wewnętrzne wyrażenie z definicji dąży do $e^{-1}$, a w efekcie cały wynik dąży do wartości dokładnego rozwiązania $e^{-5t}$, co dowodzi zbieżności metody.
 
-  \item[\textbf{(c)}] \textbf{Numeryczna stabilność metody jawnej:} Metoda jest stabilna, gdy tzw. czynnik wzmocnienia $|1 + h\lambda| \leq 1$. Obliczenia dla zadanego kroku dają:
-  \[
-    |1 + 0.5 \cdot (-5)| = |1 - 2.5| = |-1.5| = 1.5 > 1
-  \]
-  Przekroczenie jedności oznacza, że przy kroku $h=0.5$ metoda staje się całkowicie niestabilna i obarczona rosnącym błędem.
+\subsection{Zadanie 4(c): Numeryczna stabilność metody jawnej}
+Metoda jest stabilna, gdy tzw. czynnik wzmocnienia $|1 + h\lambda| \leq 1$. Obliczenia dla zadanego kroku dają:
+\[
+  |1 + 0.5 \cdot (-5)| = |1 - 2.5| = |-1.5| = 1.5 > 1
+\]
+Przekroczenie jedności oznacza, że przy kroku $h=0.5$ metoda staje się całkowicie niestabilna i obarczona rosnącym błędem.
 
-  \item[\textbf{(d)}] \textbf{Obliczenia numeryczne dla metody jawnej:} Zgodnie z wyprowadzonym wyżej wzorem, w węźle $t=0.5$ po jednym kroku metoda daje przybliżenie:
-  \[
-    y_1 = y_0(1-5 \cdot 0.5) = 1 \cdot (-1.5) = -1.5
-  \]
-  Ze względu na niestabilność, wynik ten jest ujemny i kompletnie błędny względem precyzyjnej wartości $y(0.5) = e^{-2.5} \approx 0.082$.
+\subsection{Zadanie 4(d): Obliczenia numeryczne dla metody jawnej}
+Zgodnie z wyprowadzonym wyżej wzorem, w węźle $t=0.5$ po jednym kroku metoda daje przybliżenie:
+\[
+  y_1 = y_0(1-5 \cdot 0.5) = 1 \cdot (-1.5) = -1.5
+\]
+Ze względu na niestabilność, wynik ten jest ujemny i kompletnie błędny względem precyzyjnej wartości $y(0.5) = e^{-2.5} \approx 0.082$.
 
-  \item[\textbf{(e)}] \textbf{Stabilność niejawnej metody Eulera:} W metodzie niejawnej kolejny węzeł wyznacza się z użyciem wartości funkcji w nowym punkcie: $y_{n+1} = y_n - 5h y_{n+1}$. Po przekształceniach daje to $y_{n+1} = \frac{y_n}{1 + 5h}$. Współczynnik wzmocnienia wyliczony dla tego przypadku to:
-  \[
-    \left|\frac{1}{1+5h}\right| = \left|\frac{1}{1+2.5}\right| = \frac{1}{3.5} \approx 0.286 < 1
-  \]
-  Otrzymana wartość $< 1$ gwarantuje metodyczną A-stabilność dla zastosowanego kroku $h$.
+\subsection{Zadanie 4(e): Stabilność niejawnej metody Eulera}
+W metodzie niejawnej kolejny węzeł wyznacza się z użyciem wartości funkcji w nowym punkcie: $y_{n+1} = y_n - 5h y_{n+1}$. Po przekształceniach daje to $y_{n+1} = \frac{y_n}{1 + 5h}$. Współczynnik wzmocnienia wyliczony dla tego przypadku to:
+\[
+  \left|\frac{1}{1+5h}\right| = \left|\frac{1}{1+2.5}\right| = \frac{1}{3.5} \approx 0.286 < 1
+\]
+Otrzymana wartość $< 1$ gwarantuje metodyczną A-stabilność dla zastosowanego kroku $h$.
 
-  \item[\textbf{(f)}] \textbf{Obliczenia numeryczne dla metody niejawnej:} Podstawiając zadany krok do wyprowadzonego wariantu niejawnego:
-  \[
-    y_1 = \frac{y_0}{1+5h} = \frac{1}{1+2.5} = \frac{1}{3.5} \approx 0.286
-  \]
-  Mimo ograniczonej precyzji ze względu na wielki krok $h=0.5$ (odchylenie od $0.082$), wyliczony wynik pozostaje stabilny numerycznie i przyjmuje sensowne wartości dodatnie.
+\subsection{Zadanie 4(f): Obliczenia numeryczne dla metody niejawnej}
+Podstawiając zadany krok do wyprowadzonego wariantu niejawnego:
+\[
+  y_1 = \frac{y_0}{1+5h} = \frac{1}{1+2.5} = \frac{1}{3.5} \approx 0.286
+\]
+Mimo ograniczonej precyzji ze względu na wielki krok $h=0.5$ (odchylenie od $0.082$), wyliczony wynik pozostaje stabilny numerycznie i przyjmuje sensowne wartości dodatnie.
 
-  \item[\textbf{(g)}] \textbf{Maksymalna dopuszczalna wartość kroku $h$:} Globalny błąd algorytmu opiera się na szacowaniu $|y_n - y(t)| \approx \frac{h}{2} \max |y''(\xi)| t$. Skoro $y(t) = e^{-5t}$, to $y''(t) = 25e^{-5t}$. Jej maksymalna wartość w przedziale $[0, 0.5]$ znajduje się w $t=0$ i wynosi $25$. Rozwiązując nierówność dla błędu $0.001$:
-  \[
-    \frac{h}{2} \cdot 25 \cdot 0.5 \leq 0.001 \implies 6.25h \leq 0.001 \implies h \leq 1.6 \times 10^{-4}
-  \]
-  Aby dotrzeć numerycznie do $t=0.5$ przy tak małym kroku, należałoby wykonać $n = 0.5 / (1.6 \times 10^{-4}) \approx 3125$ kroków.
+\subsection{Zadanie 4(g): Dopuszczalny krok czasowy}
+Globalny błąd algorytmu opiera się na szacowaniu $|y_n - y(t)| \approx \frac{h}{2} \max |y''(\xi)| t$. Skoro $y(t) = e^{-5t}$, to $y''(t) = 25e^{-5t}$. Jej maksymalna wartość w przedziale $[0, 0.5]$ znajduje się w $t=0$ i wynosi $25$. Rozwiązując nierówność dla błędu $0.001$:
+\[
+  \frac{h}{2} \cdot 25 \cdot 0.5 \leq 0.001 \implies 6.25h \leq 0.001 \implies h \leq 1.6 \times 10^{-4}
+\]
+Aby dotrzeć numerycznie do $t=0.5$ przy tak małym kroku, należałoby wykonać $n = 0.5 / (1.6 \times 10^{-4}) \approx 3125$ kroków.
 
-  \item[\textbf{(h)}] \textbf{Metoda wyznaczania $y_{n+1}$:} Iteracja prosta dla niejawnego Eulera przyjmuje postać $\varphi(y) = y_n - 5hy$. Rozwiązanie tego algorytmu jest zbieżne z twierdzenia Banacha tylko gdy $|\varphi'(y)| < 1$, czyli w tym wypadku $|-5h| < 1 \implies h < 0.2$. Z tego powodu dla narzuconego problemu kroku $h=0.5$ iteracja prosta od razu by się rozbiegła. W związku z tym, użycie w to miejsce metody Newtona (która nie ma takiego uciążliwego ograniczenia na rozmiar kroku) jest jedynym prawidłowym wyjściem.
-\end{itemize}
+\subsection{Zadanie 4(h): Metoda wyznaczania $y_{n+1}$}
+Iteracja prosta dla niejawnego Eulera przyjmuje postać $\varphi(y) = y_n - 5hy$. Rozwiązanie tego algorytmu jest zbieżne z twierdzenia Banacha tylko gdy $|\varphi'(y)| < 1$, czyli w tym wypadku $|-5h| < 1 \implies h < 0.2$. Z tego powodu dla narzuconego problemu kroku $h=0.5$ iteracja prosta od razu by się rozbiegła. W związku z tym, użycie w to miejsce metody Newtona (która nie ma takiego uciążliwego ograniczenia na rozmiar kroku) jest jedynym prawidłowym wyjściem.
 
 % ============================================================
-\section{Zadanie 5 \textendash{} Stabilność układu równań}
+\section{Zadanie 5: Stabilność układu równań}
 % ============================================================
 \textbf{Polecenie:} Dany jest układ równań $y'_1 = -2y_1 + y_2$, $y'_2 = -y_1 - 2y_2$. Wyznacz dopuszczalne wartości kroku $h$ dla stabilności metody Eulera.
 
@@ -229,7 +237,7 @@ Równość $y' = \sqrt{1-y}$ zachodzi pod warunkiem, że wynik pierwiastkowania 
 \end{itemize}
 
 % ============================================================
-\section{Zadanie 6 \textendash{} Rząd zbieżności metody Eulera}
+\section{Zadanie 6: Rząd zbieżności metody Eulera}
 % ============================================================
 \textbf{Polecenie:} Dany jest problem $y' = \alpha t^{\alpha-1}$, $y(0) = 0$. Wyznacz numerycznie wartości błędu oraz empiryczny rząd zbieżności dla $\alpha \in \{2.5, 1.5, 1.1\}$ i kroków $h \in \{0.2, 0.1, 0.05\}$. Wyjaśnij otrzymane wyniki.
 
@@ -269,7 +277,7 @@ $1.1$ & $0{,}1877$ & $0{,}0913$ & $0{,}0444$ \\
   \begin{figure}[H]
       \centering
       \includegraphics[width=0.9\textwidth]{wykres1.png}
-      \caption{Wykres nr 1 - Badanie rzędu zbieżności metody Eulera}
+      \caption{Wykres nr 1: Badanie rzędu zbieżności metody Eulera}
       \label{fig:wykres1}
   \end{figure}
 \end{itemize}
