@@ -1,0 +1,390 @@
+\documentclass[12pt, a4paper]{article}
+
+% Pakiety
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% Zakaz dzielenia wyrazów
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% Zmiana nazwy float figure: Rysunek -> Wykres
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% Styl listingów
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b,
+  showstringspaces=false,
+  columns=flexible,
+  keepspaces=true,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'{o}}}1
+            {ś}{{\'{s}}}1 {ł}{{\l{}}}1 {ź}{{\'{z}}}1
+            {ż}{{\.z}}1 {ć}{{\'{c}}}1 {ń}{{\'{n}}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'{O}}}1
+            {Ś}{{\'{S}}}1 {Ł}{{L}}1,
+}
+
+% Strona tytułowa
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 11: Optymalizacja
+}
+\author{Mateusz Stoch}
+\date{27 maja 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1: Preconditioning}
+% ============================================================
+
+\subsection{Zadanie 1(a): Gradient prosty z optymalnym krokiem}
+
+\textbf{Treść zadania:} Znajdź minimum funkcji $f$ metodą gradientu prostego, wyznaczając w każdej iteracji optymalną wartość kroku $\alpha_k$. Narysuj wykres konturowy funkcji $f$, na którym zaznacz iteracje algorytmu. Jako punkt startowy przyjmij $(x_0, y_0) = (9, 1)$.
+
+Funkcja celu jest określona wzorem:
+\[
+  f(x, y) = \frac{1}{2}x^2 + \frac{9}{2}y^2
+\]
+
+Optymalną długość kroku w każdej iteracji możemy wyznaczyć analitycznie za pomocą dokładnego przeszukiwania kierunkowego (exact line search). Wzór ten wyprowadza się poprzez znalezienie $\alpha$, które minimalizuje wartość funkcji w nowym punkcie, czyli szukamy minimum funkcji jednej zmiennej $h(\alpha) = f(x_k - \alpha g_k)$. Po zróżniczkowaniu tej funkcji względem $\alpha$ i przyrównaniu pochodnej do zera otrzymujemy optymalny krok $\alpha_k$ dla funkcji kwadratowej o Hesjanie $H$:
+\[
+  \alpha_k = \frac{\|g_k\|^2}{g_k^T H g_k}
+\]
+gdzie $g_k = \nabla f(x_k, y_k) = [x_k, 9y_k]^T$ to gradient w danej iteracji, a $H = \nabla^2 f(x, y) = \begin{bmatrix} 1 & 0 \\ 0 & 9 \end{bmatrix}$ to stała macierz drugich pochodnych (Hesjan).
+
+\begin{lstlisting}[caption={Gradient prosty z optymalnym krokiem}]
+def optimal_step_f1(xy):
+    g = grad_f1(xy)
+    H = np.diag([1.0, 9.0])
+    return (g @ g) / (g @ H @ g)
+
+def gradient_descent_f1(xy0, tol=1e-10, max_iter=1000):
+    xy = np.array(xy0, dtype=float)
+    history = [xy.copy()]
+    for _ in range(max_iter):
+        g = grad_f1(xy)
+        if np.linalg.norm(g) < tol:
+            break
+        alpha = optimal_step_f1(xy)
+        xy = xy - alpha * g
+        history.append(xy.copy())
+    return np.array(history)
+\end{lstlisting}
+
+Uruchomienie algorytmu z punktu startowego $(9, 1)$ dało następujące wyniki:
+\begin{itemize}
+  \item Liczba iteracji potrzebna do osiągnięcia zbieżności (z tolerancją $\|g_k\| < 10^{-10}$): 115
+  \item Znalezione minimum: $x = 0{,}000000$, $y = 0{,}000000$
+  \item Wartość funkcji w minimum: $2{,}31 \cdot 10^{-21}$
+\end{itemize}
+
+Trajektorię punktów pośrednich przedstawiono na Wykresie~\ref{fig:wykres1}. Charakterystyczny zygzakowaty kształt wynika z faktu, że kierunek najszybszego spadku (gradient) nie jest skierowany bezpośrednio na minimum, lecz jest prostopadły do linii poziomicowych (konturów), które są mocno wydłużonymi elipsami.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres1.png}
+  \caption{Wykres konturowy funkcji $f(x,y)$ wraz z zaznaczoną zygzakowatą trajektorią metody gradientu prostego.}
+  \label{fig:wykres1}
+\end{figure}
+
+\subsection{Zadanie 1(b): Uwarunkowanie Hessiana}
+
+\textbf{Treść zadania:} Oblicz współczynnik uwarunkowania macierzy $\nabla^2 f(x, y)$.
+
+Hesjan funkcji $f(x, y)$ jest stały i wynosi:
+\[
+  \nabla^2 f(x, y) = H = \begin{bmatrix} 1 & 0 \\ 0 & 9 \end{bmatrix}
+\]
+
+Wartości własne tej macierzy diagonalnej to bezpośrednio jej elementy na przekątnej:
+\[
+  \lambda_{\min} = 1{,}0, \qquad \lambda_{\max} = 9{,}0
+\]
+
+Współczynnik uwarunkowania macierzy $\kappa$ definiuje się jako stosunek największej do najmniejszej wartości własnej (dla macierzy symetrycznych dodatnio określonych):
+\[
+  \kappa = \frac{\lambda_{\max}}{\lambda_{\min}} = \frac{9{,}0}{1{,}0} = 9{,}0
+\]
+
+Współczynnik ten mierzy, jak bardzo elipsy poziomicowe są rozciągnięte. Im większy jest $\kappa$, tym bardziej wydłużone elipsy, co spowalnia zbieżność gradientu prostego. Teoretyczny mnożnik zbieżności (ogólne oszacowanie tempa spadku błędu na krok) wynosi:
+\[
+  R = \left( \frac{\kappa - 1}{\kappa + 1} \right)^2 = \left( \frac{9 - 1}{9 + 1} \right)^2 = \left( \frac{8}{10} \right)^2 = 0{,}64
+\]
+Oznacza to, że w każdym kroku błąd może zmniejszyć się co najwyżej o czynnik $0{,}64$, co tłumaczy dużą liczbę iteracji (115) potrzebną do osiągnięcia bardzo wysokiej dokładności.
+
+\subsection{Zadanie 1(c): Dekompozycja Choleskiego Hessiana}
+
+\textbf{Treść zadania:} Znajdź macierz $L$ taką, że: $\nabla^2 f(x, y) = L L^T$.
+
+Poszukujemy macierzy dolnotrójkątnej $L$, która po przemnożeniu przez swoją transpozycję da macierz Hessiana. Stosując dekompozycję Choleskiego dla macierzy diagonalnej:
+\[
+  H = \begin{bmatrix} 1 & 0 \\ 0 & 9 \end{bmatrix}
+\]
+otrzymujemy:
+\[
+  L = \begin{bmatrix} \sqrt{1} & 0 \\ 0 & \sqrt{9} \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ 0 & 3 \end{bmatrix}
+\]
+
+Przemnożenie daje poprawny wynik:
+\[
+  L L^T = \begin{bmatrix} 1 & 0 \\ 0 & 3 \end{bmatrix} \begin{bmatrix} 1 & 0 \\ 0 & 3 \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ 0 & 9 \end{bmatrix} = H
+\]
+
+\subsection{Zadanie 1(d): Minimalizacja z preconditioningiem}
+
+\textbf{Treść zadania:} Definiując zmienne $x', y'$:
+\[
+  \begin{bmatrix} x' \\ y' \end{bmatrix} = L^T \begin{bmatrix} x \\ y \end{bmatrix}
+\]
+otrzymujemy
+\[
+  \begin{bmatrix} x \\ y \end{bmatrix} = L^{-T} \begin{bmatrix} x' \\ y' \end{bmatrix}
+\]
+oraz
+\[
+  g(x', y') = f\left( L^{-T} \begin{bmatrix} x' \\ y' \end{bmatrix} \right)
+\]
+Znajdź minimum funkcji $g$ metodą gradientu prostego. Na podstawie otrzymanego wyniku wyznacz minimum funkcji $f$.
+
+Zastosowana transformacja preconditioning ma na celu poprawę uwarunkowania problemu. Obliczmy macierz $L^{-T}$ (równą $L^{-1}$ ponieważ $L$ jest diagonalna i symetryczna):
+\[
+  L^{-T} = \begin{bmatrix} 1 & 0 \\ 0 & \frac{1}{3} \end{bmatrix}
+\]
+
+Nowe współrzędne to $x' = x$ oraz $y' = 3y$. Wstawiając to do funkcji $f$, otrzymujemy nową funkcję $g(x', y')$:
+\[
+  g(x', y') = f(x', \tfrac{1}{3}y') = \frac{1}{2}(x')^2 + \frac{9}{2}\left( \frac{1}{3}y' \right)^2 = \frac{1}{2}(x')^2 + \frac{1}{2}(y')^2
+\]
+
+Hesjan nowej funkcji $g$ wynosi:
+\[
+  \nabla^2 g(x', y') = I = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}
+\]
+Współczynnik uwarunkowania tej macierzy wynosi $\kappa = 1{,}0$, co oznacza idealnie kołowe linie poziomicowe. Teoretyczny mnożnik zbieżności wynosi $R = \left( \frac{1-1}{1+1} \right)^2 = 0$. Wynika stąd, że gradient w każdym punkcie wskazuje dokładnie na minimum i algorytm powinien zbiec w dokładnie jednej iteracji.
+
+Punkt startowy w nowej przestrzeni to:
+\[
+  \begin{bmatrix} x'_0 \\ y'_0 \end{bmatrix} = L^T \begin{bmatrix} x_0 \\ y_0 \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ 0 & 3 \end{bmatrix} \begin{bmatrix} 9 \\ 1 \end{bmatrix} = \begin{bmatrix} 9 \\ 3 \end{bmatrix}
+\]
+
+Uruchomienie gradientu prostego z punktu $(9, 3)$ potwierdziło to, zbieżność nastąpiła po dokładnie 1 iteracji z minimum w $(0, 0)$.
+
+\begin{lstlisting}[caption={Skalowanie zmiennych (preconditioning)}]
+# L^{-T}
+L_inv_T = np.linalg.inv(L.T)
+
+def g_precond(xp_yp):
+    xy = L_inv_T @ np.array(xp_yp)
+    return f1(xy)
+
+def grad_g_precond(xp_yp):
+    xy = L_inv_T @ np.array(xp_yp)
+    gf = grad_f1(xy)
+    return np.linalg.inv(L) @ gf
+\end{lstlisting}
+
+Przeliczenie z powrotem na oryginalne zmienne za pomocą zależności $\begin{bmatrix} x \\ y \end{bmatrix} = L^{-T} \begin{bmatrix} x' \\ y' \end{bmatrix}$ daje współrzędne minimum pierwotnej funkcji $f$:
+\[
+  \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ 0 & \frac{1}{3} \end{bmatrix} \begin{bmatrix} 0 \\ 0 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix}
+\]
+
+Porównanie trajektorii z preconditioningiem i bez niego przedstawia Wykres~\ref{fig:wykres2}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres2.png}
+  \caption{Porównanie trajektorii optymalizacji bez skalowania zmiennych (115 iteracji) oraz po zastosowaniu preconditioningu (1 iteracja).}
+  \label{fig:wykres2}
+\end{figure}
+
+% ============================================================
+\section{Zadanie 2: Wiszący łańcuch}
+% ============================================================
+
+\subsection{Wyprowadzenie gradientu energii potencjalnej}
+
+\textbf{Treść zadania:} Łańcuch reprezentujemy jako $n+1$ punktowych mas o współrzędnych $(x^{(i)}, y^{(i)})$ i masie $m$ każda. Każde kolejne dwie masy połączone są sprężyną o długości w stanie spoczynku $L$ i współczynniku sprężystości $k$. Energia potencjalna układu dana jest wzorem:
+\[
+  V(\mathbf{x}, \mathbf{y}) = \frac{1}{2} \sum_{i=0}^{n-1} k \left( d_i - L \right)^2 + g m \sum_{i=0}^n y^{(i)}
+\]
+gdzie $d_i = \sqrt{(x^{(i)} - x^{(i+1)})^2 + (y^{(i)} - y^{(i+1)})^2}$ to długość $i$-tej sprężyny. Wyznacz wyrażenie na gradient $\nabla V$ funkcji celu $V$ względem położeń $x^{(i)}$ i $y^{(i)}$.
+
+Współrzędne końców łańcucha są ustalone: $(x^{(0)}, y^{(0)}) = (0, 0)$ oraz $(x^{(n)}, y^{(n)}) = (3, 1)$. Zmiennymi decyzyjnymi w optymalizacji są wyłącznie współrzędne punktów wewnętrznych, tzn. dla $i \in \{1, \dots, n-1\}$.
+
+Zdefiniujmy długość $i$-tej sprężyny (łączącej masę $i$ z masą $i+1$) jako:
+\[
+  d_i = \sqrt{(x^{(i)} - x^{(i+1)})^2 + (y^{(i)} - y^{(i+1)})^2}
+\]
+
+Pochodne cząstkowe energii sprężystości pojedynczego segmentu $V_{\text{sprz}, i} = \frac{1}{2}k(d_i - L)^2$ względem współrzędnych wynoszą:
+\[
+  \frac{\partial V_{\text{sprz}, i}}{\partial x^{(i)}} = k(d_i - L) \frac{x^{(i)} - x^{(i+1)}}{d_i}, \qquad \frac{\partial V_{\text{sprz}, i}}{\partial x^{(i+1)}} = -k(d_i - L) \frac{x^{(i)} - x^{(i+1)}}{d_i}
+\]
+
+Ponieważ każdy punkt wewnętrzny $i$ jest połączony z dwoma sprężynami (o indeksach $i-1$ oraz $i$), jego przesunięcie wpływa na energię obu tych sprężyn. Dodając wpływ grawitacji na współrzędną $y^{(i)}$, otrzymujemy ostateczne wzory na składowe gradientu względem położeń punktu $i$:
+\[
+  \frac{\partial V}{\partial x^{(i)}} = k(d_i - L) \frac{x^{(i)} - x^{(i+1)}}{d_i} - k(d_{i-1} - L) \frac{x^{(i-1)} - x^{(i)}}{d_{i-1}}
+\]
+\[
+  \frac{\partial V}{\partial y^{(i)}} = k(d_i - L) \frac{y^{(i)} - y^{(i+1)}}{d_i} - k(d_{i-1} - L) \frac{y^{(i-1)} - y^{(i)}}{d_{i-1}} + m g
+\]
+Wzory te zachodzą dla wszystkich mas wewnętrznych $i = 1, \dots, n-1$.
+
+\subsection{Zadanie 2(a): Gradient prosty ze stałym krokiem}
+
+\textbf{Treść zadania:} Minimalizuj całkowitą energię potencjalną łańcucha metodą gradientu prostego ze stałym współczynnikiem uczenia $\alpha$. Przyjmij wartości: $n = 40$, $L = 0{,}1$ m, $m = 0{,}1$ kg, $k = 70$ N/m, $g = 9{,}81$ m/s$^2$.
+
+Liczba stopni swobody dla $N=40$ wynosi 78 (39 wolnych punktów po 2 współrzędne każdy). Energia potencjalna dla początkowego ułożenia łańcucha (jako prostej łączącej punkty końcowe) wynosi $20{,}7246$ J.
+
+Do optymalizacji wybrano krok $\alpha = 0{,}0005$. Wartość ta okazała się jednak niestabilna. Na skutek zbyt dużego kroku w stosunku do lokalnego uwarunkowania funkcji (które dynamicznie się zmienia podczas ruchu punktów), algorytm uległ rozbieżności. Końcowa energia po 5000 iteracji wyniosła aż $1\,881\,127{,}0167$ J, co oznacza całkowitą eksplozję rozwiązania. Stały krok uniemożliwił poprawne wyznaczenie stanu równowagi łańcucha.
+
+\subsection{Zadanie 2(b): Gradient prosty z malejącym krokiem}
+
+\textbf{Treść zadania:} Minimalizuj całkowitą energię potencjalną łańcucha metodą gradientu prostego ze współczynnikiem uczenia $\alpha$ malejącym wykładniczo co pewną liczbę iteracji.
+
+W tej wersji algorytmu zastosowano krok początkowy $\alpha_0 = 10^{-3}$, który był zmniejszany o czynnik $0{,}7$ co 200 iteracji. Choć zapobiegło to całkowitej eksplozji (dzięki redukcji kroku w miarę upływu iteracji), algorytm wciąż nie zdołał poprawnie zbiec. Krok uczenia malał zbyt szybko lub początkowe iteracje zdążyły odrzucić rozwiązanie daleko od optimum. Końcowa energia wyniosła $119\,893{,}7925$ J, a uzyskany kształt łańcucha był daleki od fizycznego stanu równowagi.
+
+\subsection{Zadanie 2(c): Gradient prosty z przeszukiwaniem liniowym}
+
+\textbf{Treść zadania:} Minimalizuj całkowitą energię potencjalną łańcucha metodą gradientu prostego z przeszukiwaniem liniowym. Stwórz wykres ilustrujący położenie mas łańcucha po przyjęciu minimalnej energii.
+
+W tym podejściu długość kroku $\alpha_k$ była dobierana dynamicznie w każdej iteracji przy użyciu metody backtracking line search z warunkiem Armijo. Parametry wyszukiwania to: $\alpha_0 = 1{,}0$, współczynnik zmniejszania kroku $\rho = 0{,}5$ oraz stała warunku Armijo $c = 10^{-4}$.
+
+Dzięki dynamicznemu doborowi kroku algorytm stabilnie i szybko schodził w kierunku minimum, osiągając zbieżność. Końcowa energia wyniosła $12{,}9596$ J po 2000 iteracji.
+
+Porównanie zbieżności energii oraz ostateczny kształt łańcucha przedstawiono na Wykresie~\ref{fig:wykres3}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres3.png}
+  \caption{Położenie mas łańcucha po optymalizacji (po lewej) oraz wykres zbieżności energii w skali logarytmicznej (po prawej) dla trzech badanych wariantów.}
+  \label{fig:wykres3}
+\end{figure}
+
+Podsumowanie porównania metod optymalizacji zebrano w Tabeli~\ref{tab:tabela1}.
+
+\begin{table}[H]
+  \centering
+  \caption{Porównanie metod gradientowych dla zadania wiszącego łańcucha.}
+  \label{tab:tabela1}
+  \begin{tabular}{lrr}
+    \toprule
+    Wariant algorytmu & Końcowa energia $E_{\text{final}}$ [J] & Liczba iteracji \\
+    \midrule
+    Stały krok ($\alpha = 0{,}0005$) & $1\,881\,127{,}0167$ & 5000 (brak zbieżności) \\
+    Malejący krok ($\alpha_0 = 10^{-3}$) & $119\,893{,}7925$ & 5000 (brak zbieżności) \\
+    Przeszukiwanie liniowe (Armijo) & $12{,}9596$ & 2000 (zbieżność) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+% ============================================================
+\section{Zadanie 3: Predykcja roku wydania utworu}
+% ============================================================
+
+\textbf{Treść zadania:} Rozwiąż ponownie problem predykcji roku wydania utworu (laboratorium 2), używając metody gradientu prostego. Stałą uczącą wyznacz na podstawie najmniejszej i największej wartości własnej macierzy $A^T A$ reprezentującej cały zbiór treningowy. Porównaj uzyskane rozwiązanie z metodą najmniejszych kwadratów, biorąc pod uwagę dokładność predykcji na zbiorze testowym, teoretyczną złożoność obliczeniową oraz czas obliczeń.
+
+Zbiór treningowy składa się z $n = 463\,715$ próbek o liczbie cech $d = 91$ (po dodaniu kolumny jedynek). Cechy oraz rok wydania zostały znormalizowane do przedziału $[0, 1]$.
+
+\subsection{Dobór kroku uczenia}
+Hesjan dla metody najmniejszych kwadratów wynosi $A^T A$. Na podstawie obliczeń numerycznych wyznaczono ekstremalne wartości własne tej macierzy:
+\[
+  \lambda_{\min} = 4{,}5766, \qquad \lambda_{\max} = 9{,}8235 \cdot 10^6
+\]
+
+Współczynnik uwarunkowania wynosi $\kappa \approx 2{,}15 \cdot 10^6$. Stałą uczącą $\alpha$ (zapewniającą teoretycznie najszybszą zbieżność) wyznacza się ze wzoru:
+\[
+  \alpha = \frac{2}{\lambda_{\min} + \lambda_{\max}} \approx 2{,}0359 \cdot 10^{-7}
+\]
+Niezwykle mała wartość kroku wynika bezpośrednio z bardzo złego uwarunkowania macierzy cech.
+
+\subsection{Porównanie wyników}
+Wyniki działania obu metod zebrano w Tabeli~\ref{tab:tabela2}.
+
+\begin{table}[H]
+  \centering
+  \caption{Porównanie metody najmniejszych kwadratów (dokładne rozwiązanie) oraz metody gradientu prostego (po 500 iteracjach).}
+  \label{tab:tabela2}
+  \begin{tabular}{lrr}
+    \toprule
+    Kryterium & Metoda LS & Metoda GD \\
+    \midrule
+    \textbf{RMSE na zbiorze testowym} & $9{,}5102$ lat & $77{,}1863$ lat \\
+    \textbf{Czas obliczeń} & $1{,}10$ s & $7{,}29$ s \\
+    \textbf{Złożoność teoretyczna} & $\mathcal{O}(n d^2 + d^3)$ & $\mathcal{O}(M \cdot n d)$ (dla $M$ iteracji) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{itemize}
+  \item \textbf{Dokładność predykcji:} Metoda najmniejszych kwadratów daje błąd testowy na poziomie $9{,}51$ roku. Z kolei metoda gradientu prostego po 500 iteracjach osiąga zaledwie $77{,}19$ roku (błąd trenujący zmniejszył się w tym czasie jedynie z $77{,}17$ do $77{,}09$ lat). Wynika to z faktu, że przy tak małym kroku $\alpha$ spadek błędu jest skrajnie wolny, do osiągnięcia zbliżonej dokładności potrzeba by milionów iteracji.
+  \item \textbf{Czas obliczeń:} Metoda najmniejszych kwadratów wykonała się w $1{,}10$ s, natomiast 500 iteracji GD trwało $7{,}29$ s. GD jest wolniejszy, ponieważ w każdej iteracji musi przemnożyć duże macierze o rozmiarze $463\,715 \times 91$.
+  \item \textbf{Złożoność obliczeniowa:} Teoretycznie dla bardzo dużych $d$ gradient prosty mógłby być korzystniejszy, ponieważ jego złożoność rośnie liniowo z $d$, podczas gdy LS wymaga obliczenia $A^T A$ (koszt $\mathcal{O}(n d^2)$) oraz odwrócenia tej macierzy (koszt $\mathcal{O}(d^3)$). Jednak w tym przypadku $d = 91$ jest małe, więc narzut na operacje macierzowe w LS jest znikomy, a powolna zbieżność GD eliminuje go z praktycznego zastosowania.
+\end{itemize}
+
+Wykres zbieżności błędu RMSE dla metody gradientowej w porównaniu do linii odniesienia LS przedstawiono na Wykresie~\ref{fig:wykres4}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{wykres4.png}
+  \caption{Porównanie zbieżności błędu RMSE w kolejnych iteracjach metody gradientu prostego z ostatecznym wynikiem metody najmniejszych kwadratów.}
+  \label{fig:wykres4}
+\end{figure}
+
+% ============================================================
+\section{Wnioski}
+% ============================================================
+
+\begin{enumerate}
+  \item Uwarunkowanie Hesjana ma kluczowe znaczenie dla szybkości zbieżności metody gradientu prostego. Zastosowanie dekompozycji Choleskiego jako techniki preconditioningu pozwoliło zmniejszyć liczbę iteracji z 115 do zaledwie 1, sprowadzając problem do idealnie uwarunkowanego.
+  
+  \item W problemach o nieliniowej strukturze i wielu stopniach swobody, takich jak wiszący łańcuch, stały krok uczenia bardzo łatwo prowadzi do rozbieżności i eksplozji energii. Konieczne jest stosowanie dynamicznych metod doboru kroku, np. przeszukiwania liniowego Armijo, które gwarantują stabilność i zbieżność do fizycznego minimum.
+  
+  \item W przypadku klasycznej regresji liniowej na dużych zbiorach danych, gdy liczba cech $d$ jest stosunkowo mała, bezpośrednie rozwiązanie układu normalnego za pomocą metody najmniejszych kwadratów jest nieporównywalnie szybsze i dokładniejsze niż gradient prosty. Bardzo złe uwarunkowanie macierzy cech wymusza stosowanie ekstremalnie małego kroku uczenia, przez co gradient prosty staje się bezużyteczny.
+\end{enumerate}
+
+\end{document}
