@@ -67,7 +67,7 @@
 % Strona tytułowa
 \title{
   \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
-  \large Laboratorium 10 \textendash{} Równania różniczkowe zwyczajne, część II
+  \large Laboratorium 10: Równania różniczkowe zwyczajne, część II
 }
 \author{Mateusz Stoch}
 \date{20 maja 2026}
@@ -77,8 +77,10 @@
 \maketitle
 
 % ============================================================
-\section{Zadanie 1(a) \textendash{} Implementacja metod numerycznych}
+\section{Zadanie 1: Układ trzech ciał (CR3BP)}
 % ============================================================
+
+\subsection{Zadanie 1(a): Implementacja metod numerycznych}
 
 \textbf{Treść:} Dany jest układ równań ruchu ciała w polu grawitacyjnym dwóch mas (CR3BP) w układzie synodycznym:
 \begin{align*}
@@ -211,9 +213,7 @@ RK4                 & $0{,}0100$  & $0{,}8767$  \\
 
 Różnice w stanach końcowych między metodami są wyraźne, co wynika zarówno z różnych rzędów dokładności, jak i różnych właściwości stabilności każdej metody.
 
-% ============================================================
-\section{Zadanie 1(b) \textendash{} Mapa układu}
-% ============================================================
+\subsection{Zadanie 1(b): Mapa układu}
 
 \textbf{Treść:} Zaznacz położenie obu mas oraz położenie punktów libracyjnych Lagrange'a L1--L5, wyznaczonych ze wzorów:
 \[
@@ -249,9 +249,7 @@ L5 & $0{,}487849$ & $-0{,}866025$ \\
   \label{fig:mapa}
 \end{figure}
 
-% ============================================================
-\section{Zadanie 1(c) \textendash{} Trajektoria w układzie synodycznym}
-% ============================================================
+\subsection{Zadanie 1(c): Trajektoria w układzie synodycznym}
 
 \textbf{Treść:} Narysuj trajektorię ruchu ciała $(x(t), y(t))$ w układzie synodycznym (obracającym się razem z układem dwóch mas).
 
@@ -264,9 +262,7 @@ L5 & $0{,}487849$ & $-0{,}866025$ \\
 
 Trajektoria w układzie synodycznym jest złożona i nie przypomina prostego eliptycznego toru.
 
-% ============================================================
-\section{Zadanie 1(d) \textendash{} Trajektoria w układzie inercjalnym}
-% ============================================================
+\subsection{Zadanie 1(d): Trajektoria w układzie inercjalnym}
 
 \textbf{Treść:} Narysuj trajektorię ruchu ciała w nieruchomym układzie inercjalnym, korzystając z transformacji obrotowej:
 \[
@@ -285,9 +281,7 @@ Na jaką najbliższą odległość ciało zbliży się do masy $m_1$?
 
 W układzie inercjalnym obie masy poruszają się po okręgach wokół wspólnego środka masy. Badane ciało zbliży się na odległość 0.134530 j.u.
 
-% ============================================================
-\section{Zadanie 1(e) \textendash{} Prędkość w układzie inercjalnym}
-% ============================================================
+\subsection{Zadanie 1(e): Prędkość w układzie inercjalnym}
 
 \textbf{Treść:} Narysuj wykres prędkości ciała w układzie inercjalnym, korzystając z transformacji:
 \[
@@ -306,9 +300,7 @@ W układzie inercjalnym obie masy poruszają się po okręgach wokół wspólneg
   \label{fig:predkosc}
 \end{figure}
 
-% ============================================================
-\section{Zadanie 1(f) \textendash{} Energia kinetyczna i potencjalna}
-% ============================================================
+\subsection{Zadanie 1(f): Energia kinetyczna i potencjalna}
 
 \textbf{Treść:} Narysuj wykresy energii kinetycznej $T$ oraz energii potencjalnej $U$ ciała w funkcji czasu:
 \[
@@ -325,9 +317,7 @@ W układzie inercjalnym obie masy poruszają się po okręgach wokół wspólneg
 
 Wykres 5 pokazuje, że różne metody dają wyraźnie różniące się przebiegi energii, co bezpośrednio wynika z różnych błędów popełnianych przez każdy schemat całkowania.
 
-% ============================================================
-\section{Zadanie 1(g) \textendash{} Całka Jacobiego}
-% ============================================================
+\subsection{Zadanie 1(g): Całka Jacobiego}
 
 \textbf{Treść:} Sprawdź, czy otrzymane numerycznie rozwiązania zachowują niezmiennik ruchu, jakim jest całka Jacobiego $C$:
 \[
