@@ -149,7 +149,7 @@ Współczynnik uwarunkowania macierzy $\kappa$ definiuje się jako stosunek najw
   \kappa = \frac{\lambda_{\max}}{\lambda_{\min}} = \frac{9{,}0}{1{,}0} = 9{,}0
 \]
 
-Współczynnik ten mierzy, jak bardzo elipsy poziomicowe są rozciągnięte. Im większy jest $\kappa$, tym bardziej wydłużone elipsy, co spowalnia zbieżność gradientu prostego. Teoretyczny mnożnik zbieżności (ogólne oszacowanie tempa spadku błędu na krok) wynosi:
+Współczynnik ten mierzy, jak bardzo elipsy poziomicowe są rozciągnięte. Im większy jest $\kappa$, tym bardziej wydłużone elipsy, co spowalnia zbieżność gradientu prostego. Teoretyczny mnożnik zbieżności (ogólne oszacowanie tempa spadku błędu na krok, szczegółowo omówione w pracy J. R. Shewchuka~\cite{shewchuk_cg}) wynosi:
 \[
   R = \left( \frac{\kappa - 1}{\kappa + 1} \right)^2 = \left( \frac{9 - 1}{9 + 1} \right)^2 = \left( \frac{8}{10} \right)^2 = 0{,}64
 \]
@@ -388,9 +388,11 @@ Wykres zbieżności błędu RMSE dla metody gradientowej w porównaniu do linii 
 \end{enumerate}
 
 % ============================================================
-\begin{thebibliography}{1}
+\begin{thebibliography}{2}
   \bibitem{wikipedia_gd}
   Wikipedia, \emph{Gradient descent}, \url{https://en.wikipedia.org/wiki/Gradient_descent} (dostęp: 10 czerwca 2026 r.).
+  \bibitem{shewchuk_cg}
+  J. R. Shewchuk, \emph{An Introduction to the Conjugate Gradient Method Without the Agonizing Pain}, Carnegie Mellon University, 1994.
 \end{thebibliography}
 
 \end{document}
