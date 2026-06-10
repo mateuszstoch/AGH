@@ -267,6 +267,7 @@ Wykres~\ref{fig:wykres6} wyraźnie ilustruje tę numeryczną eksplozję: zamiast
 \[
   u_i^{k+1} = u_i^k + \frac{\Delta t}{(\Delta x)^2}\!\left(u_{i+1}^{k+1} - 2u_i^{k+1} + u_{i-1}^{k+1}\right)
 \]
+Przyjmij $\Delta x = 0{,}05$, ale użyj znacznie większego kroku czasowego $\Delta t = 0{,}005$. Znajdź rozwiązanie dla czasu od $t=0$ do $t=0{,}06$.
 
 Powyższy schemat prowadzi do układu równań liniowych w każdym kroku czasowym:
 \[
@@ -274,31 +275,68 @@ Powyższy schemat prowadzi do układu równań liniowych w każdym kroku czasowy
 \]
 gdzie $D^2$ to macierz drugich różnic centralnych. Powstała macierz jest trójdiagonalna, symetryczna i dodatnio określona -- układ rozwiązano bezpośrednio (\texttt{spsolve}).
 
-Kluczową zaletą metody niejawnej jest \textbf{bezwarunkowa stabilność} -- można stosować dowolnie duże $\Delta t$. W obliczeniach użyto $\Delta t = 0{,}0013$ (ten sam krok, który powodował eksplozję w metodzie jawnej) -- rozwiązanie jest fizycznie poprawne i stabilne, co przedstawia Wykres~\ref{fig:wykres7}.
+Kluczową zaletą metody niejawnej jest \textbf{bezwarunkowa stabilność}. W obliczeniach zastosowano znacznie większy krok czasowy $\Delta t = 0{,}005$, co daje współczynnik stabilności $r = 2{,}0$ (czterokrotne przekroczenie granicy stabilności metody jawnej). Jak widać na Wykresie~\ref{fig:wykres7}, rozwiązanie pozostaje w pełni stabilne i fizycznie poprawne, co potwierdza zalety schematów niejawnych.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.95\textwidth]{wykres7.png}
-  \caption{Stabilne rozwiązanie metodą niejawną BTCS ($\Delta t = 0{,}0013$, $r = 0{,}52$). Metoda niejawna jest stabilna niezależnie od wartości $r$.}
+  \caption{Stabilne rozwiązanie metodą niejawną BTCS przy dużym kroku czasowym ($\Delta t = 0{,}005$, $r = 2{,}0$).}
   \label{fig:wykres7}
 \end{figure}
 
-Podsumowanie porównania obu metod zebrano w Tabeli~\ref{tab:metody}.
+% ============================================================
+\subsection{Zadanie 2(d): Metoda Cranka-Nicolson}
+% ============================================================
 
-\begin{table}[H]
+\textbf{Treść zadania:} Rozwiąż jeszcze raz równanie, używając schematu Cranka-Nicolson, opartego na metodzie trapezów:
+\[
+  u_i^{k+1} = u_i^k + \frac{\Delta t}{2(\Delta x)^2} \left(u_{i+1}^{k+1} - 2u_i^{k+1} + u_{i-1}^{k+1} + u_{i+1}^k - 2u_i^k + u_{i-1}^k\right)
+\]
+Ponownie przyjmij $\Delta x = 0{,}05$ oraz $\Delta t = 0{,}005$ i znajdź rozwiązanie dla czasu od $t=0$ do $t=0{,}06$.
+
+Schemat Cranka-Nicolson jest bezwarunkowo stabilną metodą o wyższym rzędzie dokładności -- $\mathcal{O}(\Delta t^2 + \Delta x^2)$ -- w porównaniu do niejawnej metody Eulera, która ma dokładność pierwszego rzędu w czasie. Prowadzi to do układu równań liniowych w każdym kroku czasowym:
+\[
+  \left(I - \frac{r}{2} D^2\right) \mathbf{u}^{k+1} = \left(I + \frac{r}{2} D^2\right) \mathbf{u}^k
+\]
+Macierz lewej strony (LHS) ma na głównej przekątnej wartości $1+r$, a na sąsiednich $-r/2$. Macierz prawej strony (RHS) ma na przekątnej $1-r$, a na sąsiednich $r/2$. Rozwiązanie wyznaczone dla $\Delta t = 0{,}005$ przedstawia Wykres~\ref{fig:wykres8}. Metoda ta doskonale wygładza profil i zachowuje stabilność.
+
+\begin{figure}[H]
   \centering
-  \caption{Porównanie jawnej (FTCS) i niejawnej (BTCS) metody Eulera dla równania ciepła.}
-  \label{tab:metody}
-  \begin{tabular}{lcc}
-    \toprule
-    Cecha & Metoda jawna (FTCS) & Metoda niejawna (BTCS) \\
-    \midrule
-    Stabilność & $r \le 0{,}5$ wymagane & bezwarunkowa \\
-    Koszt kroku & $\mathcal{O}(N)$ & $\mathcal{O}(N)$ (macierz trójdiag.) \\
-    Zachowanie dla $r > 0{,}5$ & numeryczna eksplozja & stabilne \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+  \includegraphics[width=0.95\textwidth]{wykres8.png}
+  \caption{Rozwiązanie równania ciepła metodą Cranka-Nicolson ($\Delta t = 0{,}005$, $r = 2{,}0$).}
+  \label{fig:wykres8}
+\end{figure}
+
+% ============================================================
+\subsection{Zadanie 2(e): Metoda linii (MOL)}
+% ============================================================
+
+\textbf{Treść zadania:} Rozwiąż równanie metodą linii, dyskretyzując zmienną przestrzenną z krokiem $\Delta x = 0{,}05$, podczas gdy zmienna czasowa pozostaje ciągła. Uwzględniając sztywność układu, użyj odpowiedniego solwera na przedziale $0 \le t \le 0{,}06$.
+
+Dyskretyzacja przestrzenna prowadzi do układu równań różniczkowych zwyczajnych (ODE):
+\[
+  \mathbf{y}'(t) = \frac{1}{(\Delta x)^2} M \mathbf{y}(t)
+\]
+gdzie $M$ jest macierzą trójdiagonalną ze współczynnikami $[-2, 1, 1]$. Ze względu na dużą rozpiętość wartości własnych macierzy (sztywność układu) zastosowano solver \texttt{Radau} (niejawna metoda Rungego-Kutty rzędu 5) z biblioteki \texttt{scipy.integrate.solve\_ivp}. Wyniki przedstawiono na Wykresie~\ref{fig:wykres9}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres9.png}
+  \caption{Rozwiązanie równania ciepła metodą linii (MOL) przy użyciu solvera Radau.}
+  \label{fig:wykres9}
+\end{figure}
+
+% ============================================================
+\subsection{Porównanie metod dla $t = 0{,}06$}
+% ============================================================
+
+Porównano wyniki uzyskane za pomocą metod: niejawnej Eulera (BTCS), Cranka-Nicolson (CN) oraz metody linii (MOL) dla końcowej chwili czasowej $t = 0{,}06$. Maksymalne różnice bezwzględne między rozwiązaniami wynoszą:
+\begin{itemize}
+  \item Niejawna Euler vs Crank-Nicolson: $7{,}16 \cdot 10^{-3}$
+  \item Niejawna Euler vs Metoda linii: $7{,}09 \cdot 10^{-3}$
+  \item Crank-Nicolson vs Metoda linii: $1{,}12 \cdot 10^{-4}$
+\end{itemize}
+Znikome różnice (szczególnie między Crank-Nicolson a metodą linii, które są schematami wyższego rzędu) potwierdzają poprawność wdrożenia wszystkich metod.
 
 % ============================================================
 \section{Wnioski}
@@ -309,7 +347,9 @@ Podsumowanie porównania obu metod zebrano w Tabeli~\ref{tab:metody}.
 
   \item Jawna metoda Eulera (FTCS) dla równania ciepła wymaga spełnienia warunku von Neumanna $r = \Delta t / (\Delta x)^2 \le 0{,}5$. Jego naruszenie prowadzi do numerycznej eksplozji rozwiązania, co wyraźnie pokazało porównanie $\Delta t = 0{,}0012$ (stabilna) z $\Delta t = 0{,}0013$ (eksplozja).
 
-  \item Niejawna metoda Eulera (BTCS) jest bezwarunkowo stabilna i pozwala stosować duże kroki czasowe bez obawy o niestabilność. Koszt -- rozwiązywanie trójdiagonalnego układu liniowego w każdym kroku -- jest porównywalny z metodą jawną ze względu na $\mathcal{O}(N)$ złożoność algorytmu Thomasa. W praktyce dla równań parabolicznych metody niejawne są zdecydowanie preferowane.
+  \item Metody niejawne (niejawna Eulera, Crank-Nicolson) oraz metoda linii (MOL) z niejawnycm solverem \texttt{Radau} są bezwarunkowo stabilne, co pozwala na stosowanie dużych kroków czasowych ($\Delta t = 0{,}005$, $r = 2{,}0$) bez obawy o stabilność rozwiązania.
+
+  \item Metoda Cranka-Nicolson oraz metoda linii z wysokiego rzędu solverem dają dokładniejsze wyniki dzięki wyższemu rzędowi aproksymacji w czasie, co odzwierciedlają bardzo małe różnice między nimi ($\approx 1{,}12 \cdot 10^{-4}$).
 \end{enumerate}
 
 % ============================================================
