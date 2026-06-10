@@ -1,0 +1,301 @@
+\documentclass[12pt, a4paper]{article}
+
+% Pakiety
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{
+  a4paper,
+  left=2.5cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+% Zakaz dzielenia wyrazów
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% Zmiana nazwy float figure: Rysunek -> Wykres
+\addto\captionspolish{\renewcommand{\figurename}{Wykres}}
+
+% Styl listingów
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{orange!80!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b,
+  showstringspaces=false,
+  columns=flexible,
+  keepspaces=true,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={ą}{{\k{a}}}1 {ę}{{\k{e}}}1 {ó}{{\'{o}}}1
+            {ś}{{\'{s}}}1 {ł}{{\l{}}}1 {ź}{{\'{z}}}1
+            {ż}{{\\.z}}1 {ć}{{\'{c}}}1 {ń}{{\'{n}}}1
+            {Ą}{{\k{A}}}1 {Ę}{{\k{E}}}1 {Ó}{{\'{O}}}1
+            {Ś}{{\'{S}}}1 {Ł}{{L}}1,
+}
+
+% Strona tytułowa
+\title{
+  \textbf{Metody Obliczeniowe w Nauce i Technice} \\[0.5em]
+  \large Laboratorium 12: Równania różniczkowe cząstkowe
+}
+\author{Mateusz Stoch}
+\date{10 czerwca 2026}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Zadanie 1: Równanie eliptyczne -- Równanie Poissona}
+% ============================================================
+
+Celem zadania jest numeryczne rozwiązanie równania Poissona opisującego odkształcenia elastycznej membrany:
+\[
+  u_{xx} + u_{yy} = 8\pi^2 \sin(2\pi x)\cos(2\pi y)
+\]
+na dziedzinie $\Omega = [0,1] \times [0,1]$, z warunkami brzegowymi $u(0,y) = u(1,y) = 0$ oraz $u(x,0) = u(x,1) = \sin(2\pi x)$. Dokładnym rozwiązaniem jest $u(x,y) = \sin(2\pi x)\cos(2\pi y)$.
+
+% ============================================================
+\subsection{Zadanie 1(a): Dyskretyzacja operatorem pięciopunktowym}
+% ============================================================
+
+Zastosowano metodę różnic skończonych (FDM) z symetrycznym operatorem pięciopunktowym o kroku $h = 0{,}1$. Operator aproksymuje laplasjan w punkcie siatki $(x_i, y_j)$ za pomocą wartości w czterech sąsiednich węzłach:
+\[
+  \nabla^2_5 u_{i,j} = \frac{u_{i+1,j} + u_{i-1,j} + u_{i,j+1} + u_{i,j-1} - 4u_{i,j}}{h^2}
+\]
+
+Dla $h = 0{,}1$ siatka wewnętrzna zawiera $N = 9$ węzłów w każdym kierunku, co daje układ $81 \times 81$. Do reprezentacji macierzy układu użyto formatu rzadkiego \texttt{lil\_matrix} z biblioteki \texttt{scipy.sparse}, a warunki brzegowe zostały wbudowane bezpośrednio w wektor prawej strony $b$.
+
+\begin{lstlisting}[caption={Budowanie układu liniowego z operatora pięciopunktowego}]
+def build_poisson_system(h):
+    N = int(round(1/h)) - 1  # wezly wewnetrzne
+    A = lil_matrix((N*N, N*N))
+    b = np.zeros(N*N)
+    for i in range(N):
+        for j in range(N):
+            k = i*N + j
+            A[k, k] = -4.0
+            b[k] = h**2 * f(xi, yj)
+            # Sasiedzi (z uwzglednieniem warunkow brzegowych)
+            if i+1 < N: A[k, (i+1)*N + j] = 1.0
+            else:        b[k] -= g(1.0, yj)
+            ...
+    return csr_matrix(A), b, N
+\end{lstlisting}
+
+Wynik: macierz $81 \times 81$ z 369 niezerowymi elementami (gęstość 5{,}62\%).
+
+% ============================================================
+\subsection{Zadanie 1(b): Wzorzec niezerowych elementów macierzy}
+% ============================================================
+
+Wizualizacja struktury macierzy za pomocą funkcji \texttt{spy} (Wykres~\ref{fig:wykres1}) ujawnia charakterystyczny wzorzec blokowo-trójdiagonalny. Na głównej przekątnej wartość wynosi $-4$, a bezpośrednie sąsiedztwo w obrębie każdego bloku i między blokami odpowiada wartościom $+1$. Taka struktura wynika wprost ze schematu pięciopunktowego i jest typowa dla dyskretyzacji operatorów eliptycznych na siatce regularnej.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{wykres1.png}
+  \caption{Wzorzec niezerowych elementów macierzy Poissona ($h=0{,}1$, układ $81\times81$).}
+  \label{fig:wykres1}
+\end{figure}
+
+% ============================================================
+\subsection{Zadanie 1(c): Rozwiązanie iteracyjną metodą Conjugate Gradient}
+% ============================================================
+
+Układ liniowy $Au = b$ rozwiązano metodą sprzężonych gradientów (\texttt{cg} z \texttt{scipy.sparse.linalg}). Ponieważ macierz $A$ jest ujemnie określona, do solvera przekazano $(-A)u = (-b)$, zapewniając symetrię i dodatniość macierzy.
+
+Zbieżność osiągnięto po zaledwie 5 iteracjach, a końcowe residuum wyniosło $1{,}61 \cdot 10^{-14}$. Tak szybka zbieżność wynika z dobrze uwarunkowanej struktury macierzy dla tego konkretnego zagadnienia. Przebieg normy residuum przedstawiono na Wykresie~\ref{fig:wykres2}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{wykres2.png}
+  \caption{Zbieżność metody Conjugate Gradient -- norma residuum w kolejnych iteracjach.}
+  \label{fig:wykres2}
+\end{figure}
+
+% ============================================================
+\subsection{Zadanie 1(d): Porównanie rozwiązania numerycznego z dokładnym}
+% ============================================================
+
+Na Wykresie~\ref{fig:wykres3} zestawiono rozwiązanie dokładne $u(x,y) = \sin(2\pi x)\cos(2\pi y)$ z rozwiązaniem numerycznym $\hat{u}(x,y)$, a także kolorowy wykres konturowy funkcji błędu $|u - \hat{u}|$.
+
+Maksymalny błąd bezwzględny przy $h = 0{,}1$ wyniósł $3{,}50 \cdot 10^{-2}$, a średni $7{,}59 \cdot 10^{-3}$. Błąd jest wyraźnie większy w okolicach brzegu $y=0$ i $y=1$, gdzie funkcja ma największe gradienty.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres3.png}
+  \caption{Lewy panel: rozwiązanie dokładne (góra) i numeryczne (dół). Prawy panel: kolorowy wykres konturowy błędu $|u - \hat{u}|$.}
+  \label{fig:wykres3}
+\end{figure}
+
+% ============================================================
+\subsection{Zadanie 1(e): Empiryczny rząd zbieżności}
+% ============================================================
+
+Aby wyznaczyć empiryczny rząd zbieżności, obliczenia powtórzono dla $h \in \{1/4, 1/8, 1/16, 1/32, 1/64\}$. Wyniki zestawiono w Tabeli~\ref{tab:zbieznosc}.
+
+\begin{table}[H]
+  \centering
+  \caption{Maksymalny błąd bezwzględny oraz empiryczny rząd zbieżności dla różnych kroków $h$.}
+  \label{tab:zbieznosc}
+  \begin{tabular}{cccc}
+    \toprule
+    $h$ & Maks. błąd & Rząd $p$ (do poprzedniego) \\
+    \midrule
+    $1/4$  & $2{,}67 \cdot 10^{-1}$ & -- \\
+    $1/8$  & $5{,}83 \cdot 10^{-2}$ & 2{,}19 \\
+    $1/16$ & $1{,}41 \cdot 10^{-2}$ & 2{,}05 \\
+    $1/32$ & $3{,}50 \cdot 10^{-3}$ & 2{,}01 \\
+    $1/64$ & $8{,}73 \cdot 10^{-4}$ & 2{,}00 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Średni empiryczny rząd zbieżności wynosi $p \approx 2{,}06$, co doskonale zgadza się z wartością teoretyczną $p = 2$ dla operatora pięciopunktowego. Oznacza to, że błąd dyskretyzacji spada proporcjonalnie do $h^2$ -- dwukrotne zagęszczenie siatki zmniejsza błąd czterokrotnie.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{wykres4.png}
+  \caption{Maksymalny błąd bezwzględny w funkcji kroku $h$ w skali log-log. Nachylenie prostej potwierdza rząd 2.}
+  \label{fig:wykres4}
+\end{figure}
+
+% ============================================================
+\section{Zadanie 2: Równanie paraboliczne -- Równanie ciepła}
+% ============================================================
+
+Celem zadania jest rozwiązanie jednowymiarowego równania przewodnictwa ciepła:
+\[
+  u_t = u_{xx}, \qquad 0 \le x \le 1, \quad t \ge 0
+\]
+z warunkiem początkowym w postaci funkcji namiotowej:
+\[
+  u(0, x) = \begin{cases} 2x & x \le 0{,}5 \\ 2 - 2x & x > 0{,}5 \end{cases}
+\]
+i zerowymi warunkami brzegowymi $u(t,0) = u(t,1) = 0$.
+
+% ============================================================
+\subsection{Zadanie 2(a): Jawna metoda Eulera (FTCS)}
+% ============================================================
+
+Zastosowano dyskretyzację z progresywną różnicą w czasie i centralną w przestrzeni (Forward Time, Central Space -- FTCS). Schemat aktualizacji to:
+\[
+  u_i^{k+1} = u_i^k + r\!\left(u_{i+1}^k - 2u_i^k + u_{i-1}^k\right), \qquad r = \frac{\Delta t}{(\Delta x)^2}
+\]
+
+Przyjęto $\Delta x = 0{,}05$ i $\Delta t = 0{,}0012$, co daje $r = 0{,}48 < 0{,}5$, a więc schemat spełnia warunek stabilności von Neumanna i jest stabilny. Obliczenia wykonano od $t=0$ do $t=0{,}06$, rysując rozwiązanie co 10 kroków czasowych. Na Wykresie~\ref{fig:wykres5} widać stopniowe wygładzanie się profilu temperatury -- ostry kształt namiotowy ulega rozlaniu i spłaszczeniu, co jest fizycznie intuicyjne.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres5.png}
+  \caption{Ewolucja profilu temperatury metodą jawną FTCS ($\Delta t = 0{,}0012$, $r = 0{,}48$). Lewy panel: wykres powierzchniowy 3D, prawy: profile dla kolejnych kroków czasowych.}
+  \label{fig:wykres5}
+\end{figure}
+
+% ============================================================
+\subsection{Zadanie 2(b): Jawna metoda Eulera z niestabilnym krokiem}
+% ============================================================
+
+Obliczenia powtórzono z $\Delta t = 0{,}0013$, co daje $r = 0{,}52 > 0{,}5$, naruszając warunek von Neumanna. Zgodnie z teorią, schemat jawny jest bezwarunkowo niestabilny dla $r > 0{,}5$ -- błędy zaokrągleń narastają wykładniczo i rozwiązanie eksploduje, nie mając żadnego fizycznego sensu.
+
+Wykres~\ref{fig:wykres6} wyraźnie ilustruje tę numeryczną eksplozję: zamiast wygładzonego profilu temperatury pojawia się oscylujące, nieskończenie rosnące rozwiązanie. Stanowi to ważne przypomnienie, że przy schematach jawnych krok czasowy musi być dobrany zgodnie z kryterium stabilności.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres6.png}
+  \caption{Numeryczna eksplozja rozwiązania przy $\Delta t = 0{,}0013$ ($r = 0{,}52 > 0{,}5$). Warunek stabilności von Neumanna nie jest spełniony.}
+  \label{fig:wykres6}
+\end{figure}
+
+% ============================================================
+\subsection{Zadanie 2(c): Niejawna metoda Eulera (BTCS)}
+% ============================================================
+
+W tym podpunkcie zastosowano niejawną metodę Eulera (Backward Time, Central Space -- BTCS). Schemat prowadzi do układu równań liniowych w każdym kroku czasowym:
+\[
+  u_i^{k+1} - r\!\left(u_{i+1}^{k+1} - 2u_i^{k+1} + u_{i-1}^{k+1}\right) = u_i^k
+\]
+co zapisuje się macierzowo jako $(I - r \cdot D^2)\mathbf{u}^{k+1} = \mathbf{u}^k$, gdzie $D^2$ to macierz drugich różnic centralnych. Powstała macierz jest trójdiagonalna, symetryczna i dodatnio określona, więc układ rozwiązano bezpośrednio (\texttt{spsolve}).
+
+Kluczową zaletą metody niejawnej jest \textbf{bezwarunkowa stabilność} -- można stosować dowolnie duże $\Delta t$. W obliczeniach użyto $\Delta t = 0{,}0013$ (ten sam krok, który powodował eksplozję w metodzie jawnej) -- rozwiązanie jest fizycznie poprawne i stabilne.
+
+Kosztem jest konieczność rozwiązywania układu liniowego w każdym kroku, ale dla trójdiagonalnej macierzy można to robić w czasie $\mathcal{O}(N)$, co jest bardzo efektywne.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{wykres7.png}
+  \caption{Stabilne rozwiązanie metodą niejawną BTCS ($\Delta t = 0{,}0013$, $r = 0{,}52$). Metoda niejawna jest stabilna niezależnie od wartości $r$.}
+  \label{fig:wykres7}
+\end{figure}
+
+Podsumowanie porównania obu metod zebrano w Tabeli~\ref{tab:metody}.
+
+\begin{table}[H]
+  \centering
+  \caption{Porównanie jawnej (FTCS) i niejawnej (BTCS) metody Eulera dla równania ciepła.}
+  \label{tab:metody}
+  \begin{tabular}{lcc}
+    \toprule
+    Cecha & Metoda jawna (FTCS) & Metoda niejawna (BTCS) \\
+    \midrule
+    Stabilność & $r = \Delta t / (\Delta x)^2 \le 0{,}5$ & bezwarunkowa \\
+    Koszt kroku & $\mathcal{O}(N)$ & $\mathcal{O}(N)$ (macierz trójdiag.) \\
+    Zachowanie dla $r > 0{,}5$ & numeryczna eksplozja & stabilne \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================
+\section{Wnioski}
+% ============================================================
+
+\begin{enumerate}
+  \item Operator pięciopunktowy dla równania Poissona daje rząd zbieżności $p = 2$ względem kroku siatki $h$. Potwierdziły to obliczenia empiryczne (średnie $p \approx 2{,}06$). Metoda iteracyjna Conjugate Gradient była bardzo efektywna dla tej klasy układów, osiągając zbieżność w zaledwie 5 iteracjach.
+
+  \item Jawna metoda Eulera (FTCS) dla równania ciepła jest prosta w implementacji, ale wymaga spełnienia warunku von Neumanna $r = \Delta t / (\Delta x)^2 \le 0{,}5$. Jego naruszenie prowadzi do numerycznej eksplozji rozwiązania, co wyraźnie pokazało porównanie $\Delta t = 0{,}0012$ (stabilna) z $\Delta t = 0{,}0013$ (eksplozja).
+
+  \item Niejawna metoda Eulera (BTCS) jest bezwarunkowo stabilna i pozwala stosować duże kroki czasowe bez obawy o niestabilność. Koszt -- rozwiązywanie trójdiagonalnego układu liniowego w każdym kroku -- jest porównywalny z metodą jawną ze względu na $\mathcal{O}(N)$ złożoność algorytmu Thomasa. W praktyce dla równań parabolicznych metody niejawne są zdecydowanie preferowane przy trudnych warunkach stabilności.
+\end{enumerate}
+
+% ============================================================
+\begin{thebibliography}{3}
+  \bibitem{wikipedia_pde}
+  Wikipedia, \emph{Partial differential equation}, \url{https://en.wikipedia.org/wiki/Partial_differential_equation} (dostęp: 10 czerwca 2026 r.).
+  \bibitem{wikipedia_fdm}
+  Wikipedia, \emph{Finite difference method}, \url{https://en.wikipedia.org/wiki/Finite_difference_method} (dostęp: 10 czerwca 2026 r.).
+  \bibitem{leveque}
+  R. J. LeVeque, \emph{Finite Difference Methods for Ordinary and Partial Differential Equations}, SIAM, 2007.
+\end{thebibliography}
+
+\end{document}
