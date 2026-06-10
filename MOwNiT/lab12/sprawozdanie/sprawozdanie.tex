@@ -80,22 +80,31 @@
 \section{Zadanie 1: Równanie eliptyczne -- Równanie Poissona}
 % ============================================================
 
-Celem zadania jest numeryczne rozwiązanie równania Poissona opisującego odkształcenia elastycznej membrany:
+\textbf{Treść zadania:} Odkształcenia elastycznej membrany pod wpływem obciążenia o intensywności $f(x,y) = 8\pi^2 \sin(2\pi x)\cos(2\pi y)$ opisane są równaniem różniczkowym cząstkowym Poissona:
 \[
   u_{xx} + u_{yy} = 8\pi^2 \sin(2\pi x)\cos(2\pi y)
 \]
-na dziedzinie $\Omega = [0,1] \times [0,1]$, z warunkami brzegowymi $u(0,y) = u(1,y) = 0$ oraz $u(x,0) = u(x,1) = \sin(2\pi x)$. Dokładnym rozwiązaniem jest $u(x,y) = \sin(2\pi x)\cos(2\pi y)$.
+Dziedziną równania jest obszar $\Omega = [0,1]\times[0,1]$. Warunki brzegowe na brzegach dziedziny $\partial\Omega$ są następujące:
+\[
+  g(0,y) = g(1,y) = 0, \qquad g(x,0) = g(x,1) = \sin(2\pi x)
+\]
+Rozwiązaniem powyższego problemu jest funkcja $u(x,y) = \sin(2\pi x)\cos(2\pi y)$. Rozwiąż powyższe równanie stosując metodę różnic skończonych.
 
 % ============================================================
 \subsection{Zadanie 1(a): Dyskretyzacja operatorem pięciopunktowym}
 % ============================================================
 
-Zastosowano metodę różnic skończonych (FDM) z symetrycznym operatorem pięciopunktowym o kroku $h = 0{,}1$. Operator aproksymuje laplasjan w punkcie siatki $(x_i, y_j)$ za pomocą wartości w czterech sąsiednich węzłach:
+\textbf{Treść zadania:} Zastosuj operator pięciopunktowy do dyskretyzacji równań:
 \[
-  \nabla^2_5 u_{i,j} = \frac{u_{i+1,j} + u_{i-1,j} + u_{i,j+1} + u_{i,j-1} - 4u_{i,j}}{h^2}
+  \nabla^2_5 = \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2} + \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{k^2}
 \]
+gdzie $h = \Delta x$, $k = \Delta y$. Dla $h = k$ operator pięciopunktowy przyjmuje postać:
+\[
+  \nabla^2_5 = \frac{u_{i,j+1} + u_{i-1,j} - 4u_{i,j} + u_{i+1,j} + u_{i,j-1}}{h^2}
+\]
+gdzie $u_{i,j}$ oznacza rozwiązanie numeryczne w punkcie $(x_i, y_j)$. Przyjmij $h = 0{,}1$.
 
-Dla $h = 0{,}1$ siatka wewnętrzna zawiera $N = 9$ węzłów w każdym kierunku, co daje układ $81 \times 81$. Do reprezentacji macierzy układu użyto formatu rzadkiego \texttt{lil\_matrix} z biblioteki \texttt{scipy.sparse}, a warunki brzegowe zostały wbudowane bezpośrednio w wektor prawej strony $b$.
+Zastosowano metodę różnic skończonych z krokiem $h = 0{,}1$. Dla siatki wewnętrznej o $N = 9$ węzłach w każdym kierunku powstaje układ $81 \times 81$. Do reprezentacji macierzy użyto formatu rzadkiego \texttt{lil\_matrix} z biblioteki \texttt{scipy.sparse}, a warunki brzegowe zostały wbudowane bezpośrednio w wektor prawej strony $b$.
 
 \begin{lstlisting}[caption={Budowanie układu liniowego z operatora pięciopunktowego}]
 def build_poisson_system(h):
@@ -107,20 +116,19 @@ def build_poisson_system(h):
             k = i*N + j
             A[k, k] = -4.0
             b[k] = h**2 * f(xi, yj)
-            # Sasiedzi (z uwzglednieniem warunkow brzegowych)
             if i+1 < N: A[k, (i+1)*N + j] = 1.0
             else:        b[k] -= g(1.0, yj)
             ...
     return csr_matrix(A), b, N
 \end{lstlisting}
 
-Wynik: macierz $81 \times 81$ z 369 niezerowymi elementami (gęstość 5{,}62\%).
-
 % ============================================================
 \subsection{Zadanie 1(b): Wzorzec niezerowych elementów macierzy}
 % ============================================================
 
-Wizualizacja struktury macierzy za pomocą funkcji \texttt{spy} (Wykres~\ref{fig:wykres1}) ujawnia charakterystyczny wzorzec blokowo-trójdiagonalny. Na głównej przekątnej wartość wynosi $-4$, a bezpośrednie sąsiedztwo w obrębie każdego bloku i między blokami odpowiada wartościom $+1$. Taka struktura wynika wprost ze schematu pięciopunktowego i jest typowa dla dyskretyzacji operatorów eliptycznych na siatce regularnej.
+\textbf{Treść zadania:} Zilustruj wzorzec z niezerowych elementów, jaki można zaobserwować w macierzy powstałej z zastosowania operatora pięciopunktowego. Przydatna będzie funkcja \texttt{spy}.
+
+Wizualizacja struktury macierzy za pomocą funkcji \texttt{spy} (Wykres~\ref{fig:wykres1}) ujawnia na głównej przekątnej wartość $-4$, a bezpośrednie sąsiedztwo w obrębie każdego bloku i między blokami odpowiada wartościom $+1$.
 
 \begin{figure}[H]
   \centering
@@ -133,9 +141,11 @@ Wizualizacja struktury macierzy za pomocą funkcji \texttt{spy} (Wykres~\ref{fig
 \subsection{Zadanie 1(c): Rozwiązanie iteracyjną metodą Conjugate Gradient}
 % ============================================================
 
+\textbf{Treść zadania:} Rozwiąż powstały układ równań liniowych, stosując wybraną przez siebie metodę iteracyjną.
+
 Układ liniowy $Au = b$ rozwiązano metodą sprzężonych gradientów (\texttt{cg} z \texttt{scipy.sparse.linalg}). Ponieważ macierz $A$ jest ujemnie określona, do solvera przekazano $(-A)u = (-b)$, zapewniając symetrię i dodatniość macierzy.
 
-Zbieżność osiągnięto po zaledwie 5 iteracjach, a końcowe residuum wyniosło $1{,}61 \cdot 10^{-14}$. Tak szybka zbieżność wynika z dobrze uwarunkowanej struktury macierzy dla tego konkretnego zagadnienia. Przebieg normy residuum przedstawiono na Wykresie~\ref{fig:wykres2}.
+Zbieżność osiągnięto po zaledwie 5 iteracjach, a końcowe residuum wyniosło $1{,}61 \cdot 10^{-14}$. Tak szybka zbieżność wynika z dobrze uwarunkowanej struktury macierzy dla tego zagadnienia. Przebieg normy residuum przedstawiono na Wykresie~\ref{fig:wykres2}.
 
 \begin{figure}[H]
   \centering
@@ -148,7 +158,9 @@ Zbieżność osiągnięto po zaledwie 5 iteracjach, a końcowe residuum wyniosł
 \subsection{Zadanie 1(d): Porównanie rozwiązania numerycznego z dokładnym}
 % ============================================================
 
-Na Wykresie~\ref{fig:wykres3} zestawiono rozwiązanie dokładne $u(x,y) = \sin(2\pi x)\cos(2\pi y)$ z rozwiązaniem numerycznym $\hat{u}(x,y)$, a także kolorowy wykres konturowy funkcji błędu $|u - \hat{u}|$.
+\textbf{Treść zadania:} Narysuj następujące wykresy: wykres funkcji $u(x,y)$, tj.\ dokładnego rozwiązania, oraz wykres funkcji $\hat{u}(x,y)$, tj.\ rozwiązania znalezionego metodą różnic skończonych; kolorowy wykres konturowy funkcji błędu.
+
+Na Wykresie~\ref{fig:wykres3} zestawiono rozwiązanie dokładne $u(x,y) = \sin(2\pi x)\cos(2\pi y)$ z rozwiązaniem numerycznym $\hat{u}(x,y)$, a także kolorową mapę funkcji błędu $|u - \hat{u}|$.
 
 Maksymalny błąd bezwzględny przy $h = 0{,}1$ wyniósł $3{,}50 \cdot 10^{-2}$, a średni $7{,}59 \cdot 10^{-3}$. Błąd jest wyraźnie większy w okolicach brzegu $y=0$ i $y=1$, gdzie funkcja ma największe gradienty.
 
@@ -163,13 +175,15 @@ Maksymalny błąd bezwzględny przy $h = 0{,}1$ wyniósł $3{,}50 \cdot 10^{-2}$
 \subsection{Zadanie 1(e): Empiryczny rząd zbieżności}
 % ============================================================
 
-Aby wyznaczyć empiryczny rząd zbieżności, obliczenia powtórzono dla $h \in \{1/4, 1/8, 1/16, 1/32, 1/64\}$. Wyniki zestawiono w Tabeli~\ref{tab:zbieznosc}.
+\textbf{Treść zadania:} Wyznacz empiryczny rząd zbieżności operatora pięciopunktowego. W tym celu zastosuj we wzorze wartości $h$ od $1/4$ do $1/64$, zmniejszając $h$ o połowę w każdej iteracji.
+
+Wyniki zestawiono w Tabeli~\ref{tab:zbieznosc}.
 
 \begin{table}[H]
   \centering
   \caption{Maksymalny błąd bezwzględny oraz empiryczny rząd zbieżności dla różnych kroków $h$.}
   \label{tab:zbieznosc}
-  \begin{tabular}{cccc}
+  \begin{tabular}{ccc}
     \toprule
     $h$ & Maks. błąd & Rząd $p$ (do poprzedniego) \\
     \midrule
@@ -195,26 +209,31 @@ Aby wyznaczyć empiryczny rząd zbieżności, obliczenia powtórzono dla $h \in 
 \section{Zadanie 2: Równanie paraboliczne -- Równanie ciepła}
 % ============================================================
 
-Celem zadania jest rozwiązanie jednowymiarowego równania przewodnictwa ciepła:
+\textbf{Treść zadania:} Dane jest równanie przewodnictwa ciepła:
 \[
   u_t = u_{xx}, \qquad 0 \le x \le 1, \quad t \ge 0
 \]
-z warunkiem początkowym w postaci funkcji namiotowej:
+z warunkami początkowymi:
 \[
-  u(0, x) = \begin{cases} 2x & x \le 0{,}5 \\ 2 - 2x & x > 0{,}5 \end{cases}
+  u(0, x) = \begin{cases} 2x & 0 \le x \le 0{,}5 \\ 2 - 2x & 0{,}5 \le x \le 1 \end{cases}
 \]
-i zerowymi warunkami brzegowymi $u(t,0) = u(t,1) = 0$.
+oraz warunkami brzegowymi $u(t,0) = 0$, $u(t,1) = 0$.
 
 % ============================================================
 \subsection{Zadanie 2(a): Jawna metoda Eulera (FTCS)}
 % ============================================================
 
-Zastosowano dyskretyzację z progresywną różnicą w czasie i centralną w przestrzeni (Forward Time, Central Space -- FTCS). Schemat aktualizacji to:
+\textbf{Treść zadania:} Zdyskretyzuj układ, zastępując $u_t$ różnicą progresywną oraz $u_{xx}$ różnicą centralną:
 \[
-  u_i^{k+1} = u_i^k + r\!\left(u_{i+1}^k - 2u_i^k + u_{i-1}^k\right), \qquad r = \frac{\Delta t}{(\Delta x)^2}
+  \frac{u_i^{k+1} - u_i^k}{\Delta t} = \frac{u_{i+1}^k - 2u_i^k + u_{i-1}^k}{(\Delta x)^2}
 \]
+Otrzymujemy stąd:
+\[
+  u_i^{k+1} = u_i^k + \frac{\Delta t}{(\Delta x)^2}\!\left(u_{i+1}^k - 2u_i^k + u_{i-1}^k\right)
+\]
+Przyjmij krok przestrzenny $\Delta x = 0{,}05$ oraz krok czasowy $\Delta t = 0{,}0012$, znajdź rozwiązanie dla czasu od $t=0$ do $t=0{,}06$. Narysuj wykres rozwiązania co dziesięć kroków czasowych. Stwórz wykres trójwymiarowy.
 
-Przyjęto $\Delta x = 0{,}05$ i $\Delta t = 0{,}0012$, co daje $r = 0{,}48 < 0{,}5$, a więc schemat spełnia warunek stabilności von Neumanna i jest stabilny. Obliczenia wykonano od $t=0$ do $t=0{,}06$, rysując rozwiązanie co 10 kroków czasowych. Na Wykresie~\ref{fig:wykres5} widać stopniowe wygładzanie się profilu temperatury -- ostry kształt namiotowy ulega rozlaniu i spłaszczeniu, co jest fizycznie intuicyjne.
+Dla podanych parametrów współczynnik stabilności wynosi $r = \Delta t / (\Delta x)^2 = 0{,}48 < 0{,}5$, co oznacza, że warunek stabilności von Neumanna jest spełniony i schemat jest stabilny. Na Wykresie~\ref{fig:wykres5} widać stopniowe wygładzanie się profilu temperatury -- ostry kształt namiotowy ulega rozlaniu i spłaszczeniu w czasie.
 
 \begin{figure}[H]
   \centering
@@ -224,12 +243,14 @@ Przyjęto $\Delta x = 0{,}05$ i $\Delta t = 0{,}0012$, co daje $r = 0{,}48 < 0{,
 \end{figure}
 
 % ============================================================
-\subsection{Zadanie 2(b): Jawna metoda Eulera z niestabilnym krokiem}
+\subsection{Zadanie 2(b): Jawna metoda Eulera z krokiem $\Delta t = 0{,}0013$}
 % ============================================================
 
-Obliczenia powtórzono z $\Delta t = 0{,}0013$, co daje $r = 0{,}52 > 0{,}5$, naruszając warunek von Neumanna. Zgodnie z teorią, schemat jawny jest bezwarunkowo niestabilny dla $r > 0{,}5$ -- błędy zaokrągleń narastają wykładniczo i rozwiązanie eksploduje, nie mając żadnego fizycznego sensu.
+\textbf{Treść zadania:} Powtórz obliczenia z poprzedniego punktu, przyjmując rozmiar kroku $\Delta t = 0{,}0013$. Stwórz nowy wykres, narysuj rozwiązanie analogicznie jak w podpunkcie (a). Wyjaśnij różnice w otrzymanym rozwiązaniu.
 
-Wykres~\ref{fig:wykres6} wyraźnie ilustruje tę numeryczną eksplozję: zamiast wygładzonego profilu temperatury pojawia się oscylujące, nieskończenie rosnące rozwiązanie. Stanowi to ważne przypomnienie, że przy schematach jawnych krok czasowy musi być dobrany zgodnie z kryterium stabilności.
+Dla $\Delta t = 0{,}0013$ współczynnik stabilności wynosi $r = 0{,}52 > 0{,}5$, co narusza warunek von Neumanna. Schemat jawny jest niestabilny -- błędy zaokrągleń narastają wykładniczo i rozwiązanie eksploduje, nie mając żadnego fizycznego sensu.
+
+Wykres~\ref{fig:wykres6} wyraźnie ilustruje tę numeryczną eksplozję: zamiast wygładzonego profilu temperatury pojawia się oscylujące, gwałtownie rosnące rozwiązanie. Różnica między $\Delta t = 0{,}0012$ (stabilna) a $\Delta t = 0{,}0013$ (eksplozja) wynika z bardzo cienkiej granicy $r = 0{,}5$, której przekroczenie nawet o 4\% skutkuje zupełną utratą fizycznego sensu rozwiązania.
 
 \begin{figure}[H]
   \centering
@@ -242,15 +263,18 @@ Wykres~\ref{fig:wykres6} wyraźnie ilustruje tę numeryczną eksplozję: zamiast
 \subsection{Zadanie 2(c): Niejawna metoda Eulera (BTCS)}
 % ============================================================
 
-W tym podpunkcie zastosowano niejawną metodę Eulera (Backward Time, Central Space -- BTCS). Schemat prowadzi do układu równań liniowych w każdym kroku czasowym:
+\textbf{Treść zadania:} Rozwiąż ponownie równanie ciepła, tym razem używając metody niejawnej, opartej na niejawnej metodzie Eulera:
 \[
-  u_i^{k+1} - r\!\left(u_{i+1}^{k+1} - 2u_i^{k+1} + u_{i-1}^{k+1}\right) = u_i^k
+  u_i^{k+1} = u_i^k + \frac{\Delta t}{(\Delta x)^2}\!\left(u_{i+1}^{k+1} - 2u_i^{k+1} + u_{i-1}^{k+1}\right)
 \]
-co zapisuje się macierzowo jako $(I - r \cdot D^2)\mathbf{u}^{k+1} = \mathbf{u}^k$, gdzie $D^2$ to macierz drugich różnic centralnych. Powstała macierz jest trójdiagonalna, symetryczna i dodatnio określona, więc układ rozwiązano bezpośrednio (\texttt{spsolve}).
 
-Kluczową zaletą metody niejawnej jest \textbf{bezwarunkowa stabilność} -- można stosować dowolnie duże $\Delta t$. W obliczeniach użyto $\Delta t = 0{,}0013$ (ten sam krok, który powodował eksplozję w metodzie jawnej) -- rozwiązanie jest fizycznie poprawne i stabilne.
+Powyższy schemat prowadzi do układu równań liniowych w każdym kroku czasowym:
+\[
+  (I - r \cdot D^2)\,\mathbf{u}^{k+1} = \mathbf{u}^k
+\]
+gdzie $D^2$ to macierz drugich różnic centralnych. Powstała macierz jest trójdiagonalna, symetryczna i dodatnio określona -- układ rozwiązano bezpośrednio (\texttt{spsolve}).
 
-Kosztem jest konieczność rozwiązywania układu liniowego w każdym kroku, ale dla trójdiagonalnej macierzy można to robić w czasie $\mathcal{O}(N)$, co jest bardzo efektywne.
+Kluczową zaletą metody niejawnej jest \textbf{bezwarunkowa stabilność} -- można stosować dowolnie duże $\Delta t$. W obliczeniach użyto $\Delta t = 0{,}0013$ (ten sam krok, który powodował eksplozję w metodzie jawnej) -- rozwiązanie jest fizycznie poprawne i stabilne, co przedstawia Wykres~\ref{fig:wykres7}.
 
 \begin{figure}[H]
   \centering
@@ -269,7 +293,7 @@ Podsumowanie porównania obu metod zebrano w Tabeli~\ref{tab:metody}.
     \toprule
     Cecha & Metoda jawna (FTCS) & Metoda niejawna (BTCS) \\
     \midrule
-    Stabilność & $r = \Delta t / (\Delta x)^2 \le 0{,}5$ & bezwarunkowa \\
+    Stabilność & $r \le 0{,}5$ wymagane & bezwarunkowa \\
     Koszt kroku & $\mathcal{O}(N)$ & $\mathcal{O}(N)$ (macierz trójdiag.) \\
     Zachowanie dla $r > 0{,}5$ & numeryczna eksplozja & stabilne \\
     \bottomrule
@@ -283,9 +307,9 @@ Podsumowanie porównania obu metod zebrano w Tabeli~\ref{tab:metody}.
 \begin{enumerate}
   \item Operator pięciopunktowy dla równania Poissona daje rząd zbieżności $p = 2$ względem kroku siatki $h$. Potwierdziły to obliczenia empiryczne (średnie $p \approx 2{,}06$). Metoda iteracyjna Conjugate Gradient była bardzo efektywna dla tej klasy układów, osiągając zbieżność w zaledwie 5 iteracjach.
 
-  \item Jawna metoda Eulera (FTCS) dla równania ciepła jest prosta w implementacji, ale wymaga spełnienia warunku von Neumanna $r = \Delta t / (\Delta x)^2 \le 0{,}5$. Jego naruszenie prowadzi do numerycznej eksplozji rozwiązania, co wyraźnie pokazało porównanie $\Delta t = 0{,}0012$ (stabilna) z $\Delta t = 0{,}0013$ (eksplozja).
+  \item Jawna metoda Eulera (FTCS) dla równania ciepła wymaga spełnienia warunku von Neumanna $r = \Delta t / (\Delta x)^2 \le 0{,}5$. Jego naruszenie prowadzi do numerycznej eksplozji rozwiązania, co wyraźnie pokazało porównanie $\Delta t = 0{,}0012$ (stabilna) z $\Delta t = 0{,}0013$ (eksplozja).
 
-  \item Niejawna metoda Eulera (BTCS) jest bezwarunkowo stabilna i pozwala stosować duże kroki czasowe bez obawy o niestabilność. Koszt -- rozwiązywanie trójdiagonalnego układu liniowego w każdym kroku -- jest porównywalny z metodą jawną ze względu na $\mathcal{O}(N)$ złożoność algorytmu Thomasa. W praktyce dla równań parabolicznych metody niejawne są zdecydowanie preferowane przy trudnych warunkach stabilności.
+  \item Niejawna metoda Eulera (BTCS) jest bezwarunkowo stabilna i pozwala stosować duże kroki czasowe bez obawy o niestabilność. Koszt -- rozwiązywanie trójdiagonalnego układu liniowego w każdym kroku -- jest porównywalny z metodą jawną ze względu na $\mathcal{O}(N)$ złożoność algorytmu Thomasa. W praktyce dla równań parabolicznych metody niejawne są zdecydowanie preferowane.
 \end{enumerate}
 
 % ============================================================

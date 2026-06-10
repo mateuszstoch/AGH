@@ -279,7 +279,7 @@ Wzory te zachodzą dla wszystkich mas wewnętrznych $i = 1, \dots, n-1$.
 
 Liczba stopni swobody dla $N=40$ wynosi 78 (39 wolnych punktów po 2 współrzędne każdy). Energia potencjalna dla początkowego ułożenia łańcucha (jako prostej łączącej punkty końcowe) wynosi $20{,}7246$ J.
 
-Do optymalizacji wybrano krok $\alpha = 0{,}0005$. Wartość ta jest mniejsza od teoretycznego progu stabilności $\alpha_{\max} \approx 2 / L_{\text{smooth}} \approx 7 \cdot 10^{-4}$ (gdzie oszacowana stała Lipschitza gradientu wynosi $L_{\text{smooth}} \approx k(n+1) \approx 2870$). Dzięki poprawnej implementacji gradientu algorytm działa w pełni stabilnie i nie ulega rozbieżności nawet bez stosowania clippingu gradientu. Końcowa energia po 20000 iteracji wyniosła $-51{,}4276$ J, choć ze względu na stały krok algorytm nie osiągnął pełnej zbieżności z tolerancją $10^{-6}$.
+Do optymalizacji wybrano krok $\alpha = 0{,}0005$. Dzięki poprawnej implementacji gradientu algorytm działa w pełni stabilnie i nie ulega rozbieżności nawet bez stosowania clippingu gradientu. Końcowa energia po 20000 iteracji wyniosła $-51{,}4276$ J, choć ze względu na stały krok algorytm nie osiągnął pełnej zbieżności z tolerancją $10^{-6}$ nałożoną na normę wektora gradientu.
 
 \subsection{Zadanie 2(b): Gradient prosty z malejącym krokiem}
 
